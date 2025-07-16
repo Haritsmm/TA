@@ -49,81 +49,95 @@ if mode == "Siswa Individu":
         minat_bahasa = st.slider("Minat Bahasa (1-5)", min_value=1, max_value=5, value=3)
         minat_sosial = st.slider("Minat Sosial (1-5)", min_value=1, max_value=5, value=3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", min_value=1, max_value=5, value=3)
+        # Tambahan input Potensi manual
+        potensi = st.selectbox("Potensi (Label Asli untuk Data Latih)", 
+            options=["", "Sains", "Bahasa", "Sosial", "Teknologi"], 
+            index=0, format_func=lambda x: "Pilih Potensi" if x == "" else x)
 
         submitted = st.form_submit_button("Simulasi & Simpan")
         if submitted:
+            # Validasi input (Potensi wajib diisi)
             if (not nama or not jenis_kelamin or usia is None or 
                 nilai_mtk is None or nilai_ipa is None or nilai_ips is None or 
-                nilai_bindo is None or nilai_bing is None or nilai_tik is None):
-                st.error("Semua kolom wajib diisi dengan benar!")
+                nilai_bindo is None or nilai_bing is None or nilai_tik is None or potensi == ""):
+                st.error("Semua kolom termasuk Potensi wajib diisi dengan benar!")
             else:
+                # ...proses training & prediksi seperti sebelumnya...
+                # Pastikan data latih (df_train) hanya ambil data yang berlabel
                 df_all = ambil_semua_data()
-                if df_all.empty:
-                    # Load sample jika database masih kosong
-                    df_all = pd.read_csv('data/data_siswa_smp.csv')
-                    df_all.rename(columns={
-                        "Nilai Matematika": "nilai_mtk", "Nilai IPA": "nilai_ipa", "Nilai IPS": "nilai_ips",
-                        "Nilai Bahasa Indonesia": "nilai_bindo", "Nilai Bahasa Inggris": "nilai_bing", "Nilai TIK": "nilai_tik",
-                        "Minat Sains": "minat_sains", "Minat Bahasa": "minat_bahasa",
-                        "Minat Sosial": "minat_sosial", "Minat Teknologi": "minat_teknologi",
-                        "Jenis Kelamin": "jenis_kelamin", "Usia": "usia", "Potensi": "potensi_asli", "Nama": "nama"
-                    }, inplace=True)
-                hasil_df, acc, label_encoder, mlp, scaler = train_and_predict(df_all.copy())
-                input_dict = {
-                    'Jenis_Kelamin_enc': 1 if jenis_kelamin == "L" else 0,
-                    'usia': usia,
-                    'nilai_mtk': nilai_mtk,
-                    'nilai_ipa': nilai_ipa,
-                    'nilai_ips': nilai_ips,
-                    'nilai_bindo': nilai_bindo,
-                    'nilai_bing': nilai_bing,
-                    'nilai_tik': nilai_tik,
-                    'minat_sains': minat_sains,
-                    'minat_bahasa': minat_bahasa,
-                    'minat_sosial': minat_sosial,
-                    'minat_teknologi': minat_teknologi
-                }
-                hasil_pred = single_predict(input_dict, mlp, scaler, label_encoder)
-                st.session_state['hasil_prediksi_siswa'] = {
-                    "Nama": nama,
-                    "Jenis Kelamin": jenis_kelamin,
-                    "Usia": usia,
-                    "Nilai Matematika": nilai_mtk,
-                    "Nilai IPA": nilai_ipa,
-                    "Nilai IPS": nilai_ips,
-                    "Nilai Bahasa Indonesia": nilai_bindo,
-                    "Nilai Bahasa Inggris": nilai_bing,
-                    "Nilai TIK": nilai_tik,
-                    "Minat Sains": minat_sains,
-                    "Minat Bahasa": minat_bahasa,
-                    "Minat Sosial": minat_sosial,
-                    "Minat Teknologi": minat_teknologi,
-                    "Prediksi Potensi": hasil_pred
-                }
-                # Simpan ke database
-                simpan_data_siswa({
-                    'nama': nama,
-                    'jenis_kelamin': jenis_kelamin,
-                    'usia': usia,
-                    'nilai_mtk': nilai_mtk,
-                    'nilai_ipa': nilai_ipa,
-                    'nilai_ips': nilai_ips,
-                    'nilai_bindo': nilai_bindo,
-                    'nilai_bing': nilai_bing,
-                    'nilai_tik': nilai_tik,
-                    'minat_sains': minat_sains,
-                    'minat_bahasa': minat_bahasa,
-                    'minat_sosial': minat_sosial,
-                    'minat_teknologi': minat_teknologi,
-                    'potensi_asli': None,
-                    'potensi_prediksi': hasil_pred,
-                    'sumber': 'individu'
-                })
-                st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}**")
-                # Siapkan file PDF
-                hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
-                pdf_file = generate_pdf_report(hasil_output, f"Laporan Prediksi Siswa: {nama}")
-                st.session_state['pdf_file_siswa'] = pdf_file
+                df_train = df_all[
+                    df_all['potensi_asli'].notnull() & 
+                    (df_all['potensi_asli'] != "") & 
+                    (df_all['potensi_asli'] != "-")
+                ] if not df_all.empty and 'potensi_asli' in df_all.columns else pd.DataFrame()
+                if df_train.empty:
+                    df_train = pd.read_csv('data/data_siswa_smp.csv')
+                    if "Potensi" in df_train.columns:
+                        df_train = df_train[
+                            df_train['Potensi'].notnull() &
+                            (df_train['Potensi'] != "") &
+                            (df_train['Potensi'] != "-")
+                        ]
+                        df_train.rename(columns={"Potensi": "potensi_asli"}, inplace=True)
+                if df_train.empty:
+                    st.error("Data latih tidak tersedia. Harap upload data batch dengan label potensi terlebih dahulu.")
+                else:
+                    hasil_df, acc, label_encoder, mlp, scaler = train_and_predict(df_train.copy())
+                    input_dict = {
+                        'Jenis_Kelamin_enc': 1 if jenis_kelamin == "L" else 0,
+                        'usia': usia,
+                        'nilai_mtk': nilai_mtk,
+                        'nilai_ipa': nilai_ipa,
+                        'nilai_ips': nilai_ips,
+                        'nilai_bindo': nilai_bindo,
+                        'nilai_bing': nilai_bing,
+                        'nilai_tik': nilai_tik,
+                        'minat_sains': minat_sains,
+                        'minat_bahasa': minat_bahasa,
+                        'minat_sosial': minat_sosial,
+                        'minat_teknologi': minat_teknologi
+                    }
+                    hasil_pred = single_predict(input_dict, mlp, scaler, label_encoder)
+                    st.session_state['hasil_prediksi_siswa'] = {
+                        "Nama": nama,
+                        "Jenis Kelamin": jenis_kelamin,
+                        "Usia": usia,
+                        "Nilai Matematika": nilai_mtk,
+                        "Nilai IPA": nilai_ipa,
+                        "Nilai IPS": nilai_ips,
+                        "Nilai Bahasa Indonesia": nilai_bindo,
+                        "Nilai Bahasa Inggris": nilai_bing,
+                        "Nilai TIK": nilai_tik,
+                        "Minat Sains": minat_sains,
+                        "Minat Bahasa": minat_bahasa,
+                        "Minat Sosial": minat_sosial,
+                        "Minat Teknologi": minat_teknologi,
+                        "Potensi (Label Asli)": potensi,
+                        "Prediksi Potensi": hasil_pred
+                    }
+                    # Simpan ke database, label asli ikut disimpan!
+                    simpan_data_siswa({
+                        'nama': nama,
+                        'jenis_kelamin': jenis_kelamin,
+                        'usia': usia,
+                        'nilai_mtk': nilai_mtk,
+                        'nilai_ipa': nilai_ipa,
+                        'nilai_ips': nilai_ips,
+                        'nilai_bindo': nilai_bindo,
+                        'nilai_bing': nilai_bing,
+                        'nilai_tik': nilai_tik,
+                        'minat_sains': minat_sains,
+                        'minat_bahasa': minat_bahasa,
+                        'minat_sosial': minat_sosial,
+                        'minat_teknologi': minat_teknologi,
+                        'potensi_asli': potensi,
+                        'potensi_prediksi': hasil_pred,
+                        'sumber': 'individu'
+                    })
+                    st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}** (Label Asli: {potensi})")
+                    hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
+                    pdf_file = generate_pdf_report(hasil_output, f"Laporan Prediksi Siswa: {nama}")
+                    st.session_state['pdf_file_siswa'] = pdf_file
 
     if 'hasil_prediksi_siswa' in st.session_state:
         hasil_df = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
