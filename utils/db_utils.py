@@ -82,3 +82,10 @@ def ambil_semua_data():
 def backup_db():
     with open(DB_PATH, "rb") as f:
         return f.read()
+
+def kosongkan_database():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM DataSiswa")
+    conn.commit()
+    conn.close()
