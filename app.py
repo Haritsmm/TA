@@ -3,8 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
 from utils.model_utils import train_and_predict, single_predict, FTR, preprocess_df
+from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
 from utils.pdf_utils import generate_pdf_report
 
 # ========== INISIALISASI ==========
