@@ -45,24 +45,24 @@ if mode == "Siswa Individu":
         nilai_bing = st.number_input("Nilai Bahasa Inggris", min_value=0, max_value=100, value=None, format="%d")
         nilai_tik = st.number_input("Nilai TIK", min_value=0, max_value=100, value=None, format="%d")
         
-        minat_sains = st.selectbox("Minat Sains (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
-        minat_bahasa = st.selectbox("Minat Bahasa (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
-        minat_sosial = st.selectbox("Minat Sosial (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
-        minat_teknologi = st.selectbox("Minat Teknologi (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
+        # Slider minat, default di tengah (3)
+        minat_sains = st.slider("Minat Sains (1-5)", min_value=1, max_value=5, value=3)
+        minat_bahasa = st.slider("Minat Bahasa (1-5)", min_value=1, max_value=5, value=3)
+        minat_sosial = st.slider("Minat Sosial (1-5)", min_value=1, max_value=5, value=3)
+        minat_teknologi = st.slider("Minat Teknologi (1-5)", min_value=1, max_value=5, value=3)
 
         submitted = st.form_submit_button("Simulasi & Simpan")
-        
+
         if submitted:
-            # Validasi semua kolom harus diisi
+            # Validasi hanya field wajib (selain slider)
             if (not nama or not jenis_kelamin or usia is None or 
                 nilai_mtk is None or nilai_ipa is None or nilai_ips is None or 
-                nilai_bindo is None or nilai_bing is None or nilai_tik is None or
-                minat_sains == "Pilih..." or minat_bahasa == "Pilih..." or
-                minat_sosial == "Pilih..." or minat_teknologi == "Pilih..."):
-                st.error("Semua kolom wajib diisi dan dipilih dengan benar!")
+                nilai_bindo is None or nilai_bing is None or nilai_tik is None):
+                st.error("Semua kolom wajib diisi dengan benar!")
             else:
-                # --- proses prediksi & simpan seperti sebelumnya ---
+                # --- proses prediksi & simpan ---
                 st.success("Simulasi berhasil!")
+
 
         if submitted:
             df_all = ambil_semua_data()
