@@ -44,21 +44,26 @@ if mode == "Siswa Individu":
         nilai_bindo = st.number_input("Nilai Bahasa Indonesia", min_value=0, max_value=100, value=None, format="%d")
         nilai_bing = st.number_input("Nilai Bahasa Inggris", min_value=0, max_value=100, value=None, format="%d")
         nilai_tik = st.number_input("Nilai TIK", min_value=0, max_value=100, value=None, format="%d")
-        minat_sains = st.selectbox("Minat Sains (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
-        minat_bahasa = st.selectbox("Minat Bahasa (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
-        minat_sosial = st.selectbox("Minat Sosial (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
-        minat_teknologi = st.selectbox("Minat Teknologi (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
         
+        minat_sains = st.selectbox("Minat Sains (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
+        minat_bahasa = st.selectbox("Minat Bahasa (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
+        minat_sosial = st.selectbox("Minat Sosial (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
+        minat_teknologi = st.selectbox("Minat Teknologi (1-5)", options=["Pilih...", 1, 2, 3, 4, 5])
+
         submitted = st.form_submit_button("Simulasi & Simpan")
+        
         if submitted:
-            error = None
-            if not nama or not jenis_kelamin or usia is None or nilai_mtk is None or nilai_ipa is None or nilai_ips is None or nilai_bindo is None or nilai_bing is None or nilai_tik is None or minat_sains is None or minat_bahasa is None or minat_sosial is None or minat_teknologi is None:
-                error = "Semua kolom wajib diisi dengan benar!"
-            if error:
-                st.error(error)
+            # Validasi semua kolom harus diisi
+            if (not nama or not jenis_kelamin or usia is None or 
+                nilai_mtk is None or nilai_ipa is None or nilai_ips is None or 
+                nilai_bindo is None or nilai_bing is None or nilai_tik is None or
+                minat_sains == "Pilih..." or minat_bahasa == "Pilih..." or
+                minat_sosial == "Pilih..." or minat_teknologi == "Pilih..."):
+                st.error("Semua kolom wajib diisi dan dipilih dengan benar!")
             else:
-                # ... kode proses prediksi & simpan seperti sebelumnya ...
+                # --- proses prediksi & simpan seperti sebelumnya ---
                 st.success("Simulasi berhasil!")
+
         if submitted:
             df_all = ambil_semua_data()
             if df_all.empty:
