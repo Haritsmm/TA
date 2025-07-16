@@ -36,19 +36,28 @@ if mode == "Siswa Individu":
     st.subheader("Input Data Siswa Individu")
     with st.form("form_siswa"):
         nama = st.text_input("Nama Siswa")
-        jenis_kelamin = st.radio("Jenis Kelamin", ("L", "P"))
-        usia = st.number_input("Usia", 10, 20, 12)
-        nilai_mtk = st.number_input("Nilai Matematika", 0, 100, 80)
-        nilai_ipa = st.number_input("Nilai IPA", 0, 100, 80)
-        nilai_ips = st.number_input("Nilai IPS", 0, 100, 80)
-        nilai_bindo = st.number_input("Nilai Bahasa Indonesia", 0, 100, 80)
-        nilai_bing = st.number_input("Nilai Bahasa Inggris", 0, 100, 80)
-        nilai_tik = st.number_input("Nilai TIK", 0, 100, 80)
-        minat_sains = st.slider("Minat Sains (1-5)", 1, 5, 3)
-        minat_bahasa = st.slider("Minat Bahasa (1-5)", 1, 5, 3)
-        minat_sosial = st.slider("Minat Sosial (1-5)", 1, 5, 3)
-        minat_teknologi = st.slider("Minat Teknologi (1-5)", 1, 5, 3)
+        jenis_kelamin = st.radio("Jenis Kelamin", options=["L", "P"], index=None)
+        usia = st.number_input("Usia", min_value=10, max_value=20, value=None, format="%d")
+        nilai_mtk = st.number_input("Nilai Matematika", min_value=0, max_value=100, value=None, format="%d")
+        nilai_ipa = st.number_input("Nilai IPA", min_value=0, max_value=100, value=None, format="%d")
+        nilai_ips = st.number_input("Nilai IPS", min_value=0, max_value=100, value=None, format="%d")
+        nilai_bindo = st.number_input("Nilai Bahasa Indonesia", min_value=0, max_value=100, value=None, format="%d")
+        nilai_bing = st.number_input("Nilai Bahasa Inggris", min_value=0, max_value=100, value=None, format="%d")
+        nilai_tik = st.number_input("Nilai TIK", min_value=0, max_value=100, value=None, format="%d")
+        minat_sains = st.selectbox("Minat Sains (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
+        minat_bahasa = st.selectbox("Minat Bahasa (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
+        minat_sosial = st.selectbox("Minat Sosial (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
+        minat_teknologi = st.selectbox("Minat Teknologi (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
         submitted = st.form_submit_button("Simulasi & Simpan")
+        if submitted:
+            error = None
+            if not nama or not jenis_kelamin or usia is None or nilai_mtk is None or nilai_ipa is None or nilai_ips is None or nilai_bindo is None or nilai_bing is None or nilai_tik is None or minat_sains is None or minat_bahasa is None or minat_sosial is None or minat_teknologi is None:
+                error = "Semua kolom wajib diisi dengan benar!"
+            if error:
+                st.error(error)
+            else:
+                # ... kode proses prediksi & simpan seperti sebelumnya ...
+                st.success("Simulasi berhasil!")
         if submitted:
             df_all = ambil_semua_data()
             if df_all.empty:
