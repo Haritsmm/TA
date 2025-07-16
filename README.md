@@ -18,24 +18,6 @@ Dikembangkan khusus untuk mendukung tugas akhir, presentasi akademik, maupun imp
 
 ---
 
-## 🗂️ Struktur Project
-
-potensi-akademik-siswa/
-│
-├─ data/
-│ └─ data_siswa_smp.csv # Contoh data CSV
-├─ db/
-│ └─ data_siswa.db # Database SQLite (otomatis dibuat)
-├─ laporan/ # (Opsional) Tempat file laporan PDF
-├─ utils/
-│ ├─ db_utils.py # Fungsi database
-│ ├─ model_utils.py # Preprocessing & pelatihan model
-│ └─ pdf_utils.py # Laporan PDF
-├─ app.py # Main app Streamlit
-├─ requirements.txt
-├─ README.md
-
----
 
 ## 🚀 Cara Instalasi & Menjalankan
 
@@ -52,7 +34,9 @@ potensi-akademik-siswa/
     ```
 
 4. **Buka browser ke:**  
-   
+   ```bash
+    [streamlit run app.py](https://ta01704.streamlit.app/)
+   ```
 
 ---
 
