@@ -16,7 +16,6 @@ FTR = [
 def preprocess_df(df):
     """Siapkan dataframe: ubah kolom, encode jenis_kelamin, pastikan semua numeric."""
     df = df.copy()
-    # Normalisasi nama kolom jika pakai dataset luar
     rename_map = {
         "Nilai Matematika": "nilai_mtk", "Nilai IPA": "nilai_ipa", "Nilai IPS": "nilai_ips",
         "Nilai Bahasa Indonesia": "nilai_bindo", "Nilai Bahasa Inggris": "nilai_bing", "Nilai TIK": "nilai_tik",
@@ -46,9 +45,13 @@ def train_and_predict(df):
     X_scaled = scaler.fit_transform(X)
 
     kelas_count = Counter(y)
-    min_per_class = min(kelas_count.values())
-    # Stratified split hanya jika data cukup
-    if y.nunique() > 1 and min_per_class >= 2 and len(y) >= 4:
+    min_per_class = min(kelas_count.values()) if len(kelas_count) > 0 else 0
+    n_classes = y.nunique()
+    n_samples = len(y)
+    test_size = max(1, int(0.2 * n_samples))
+
+    # Split stratify HANYA jika data mencukupi syarat split per kelas
+    if n_classes > 1 and min_per_class >= 2 and n_samples >= 2*n_classes and test_size >= n_classes:
         X_train, X_test, y_train, y_test = train_test_split(
             X_scaled, y, test_size=0.2, random_state=42, stratify=y
         )
@@ -56,10 +59,9 @@ def train_and_predict(df):
         mlp.fit(X_train, y_train)
         acc = accuracy_score(y_test, mlp.predict(X_test))
     else:
-        # fallback jika data terlalu sedikit
         mlp = MLPClassifier(hidden_layer_sizes=(16, 8), activation='relu', max_iter=1000, random_state=1)
         mlp.fit(X_scaled, y)
-        acc = 1.0  # semua dipakai training
+        acc = 1.0  # semua data dipakai training, tidak bisa validasi
 
     prediksi = mlp.predict(X_scaled)
     prediksi_label = label_encoder.inverse_transform(prediksi)
