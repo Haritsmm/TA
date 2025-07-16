@@ -15,14 +15,13 @@ st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf 
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
 st.write(
     """
-    Aplikasi profesional untuk memprediksi potensi akademik siswa (**Sains, Bahasa, Sosial, Teknologi**) berbasis Machine Learning (Jaringan Syaraf Tiruan).
-    Mendukung input siswa individu, batch simulasi, visualisasi grafik, laporan PDF, dan backup database otomatis.
+    Aplikasi untuk memprediksi potensi akademik siswa (**Sains, Bahasa, Sosial, Teknologi**) berbasis Machine Learning (Jaringan Syaraf Tiruan).
     """
 )
 
-st.sidebar.header("Navigasi Menu")
+st.sidebar.header("Menu")
 mode = st.sidebar.radio(
-    "Pilih Mode:",
+    "Pilih Menu:",
     ("Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database")
 )
 
@@ -276,10 +275,10 @@ if mode == "Data & Visualisasi":
         df_db_rename = df_db.rename(columns=nama_kolom_map)
         st.dataframe(df_db_rename)
 
-        st.subheader("Distribusi Potensi Prediksi (Pie & Bar Chart, seluruh data database)")
+        st.subheader("Distribusi Potensi Prediksi")
         fig1, ax1 = plt.subplots(figsize=(5, 5))
         df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
-        plt.title("Distribusi Potensi Prediksi (Pie Chart)")
+        plt.title("Distribusi Potensi Prediksi")
         ax1.axis("equal")
         st.pyplot(fig1)
         fig2, ax2 = plt.subplots(figsize=(6, 3))
@@ -292,14 +291,14 @@ if mode == "Data & Visualisasi":
             st.write("Distribusi Potensi Asli (jika tersedia):")
             fig3, ax3 = plt.subplots(figsize=(5, 5))
             df_db['potensi_asli'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax3)
-            plt.title("Distribusi Potensi Asli")
+            plt.title("Distribusi Potensi")
             ax3.axis("equal")
             st.pyplot(fig3)
         if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
             df_eva = df_db[df_db['potensi_asli'].notnull()]
             y_true = df_eva['potensi_asli']
             y_pred = df_eva['potensi_prediksi']
-            st.subheader("Evaluasi Model (Data di Database)")
+            st.subheader("Evaluasi Model")
             if len(y_true.unique()) > 1:
                 from sklearn.metrics import accuracy_score, classification_report
                 acc_db = accuracy_score(y_true, y_pred)
