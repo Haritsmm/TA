@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import os
 
 from utils.model_utils import train_and_predict, single_predict, FTR, preprocess_df
@@ -124,6 +125,29 @@ if mode == "Siswa Individu":
                 pdf_file = generate_pdf_report(hasil_output, f"Laporan Prediksi Siswa: {nama}")
                 st.session_state['pdf_file_siswa'] = pdf_file
 
+    if 'hasil_prediksi_siswa' in st.session_state:
+        hasil_df = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
+    
+        # Tampilkan preview hasil prediksi individu
+        st.markdown("#### Preview Hasil Simulasi")
+        st.dataframe(hasil_df)
+    
+        # Pie Chart perbandingan prediksi seluruh database
+        from utils.db_utils import ambil_semua_data
+        df_db = ambil_semua_data()
+        # Gabungkan prediksi baru ke database untuk visualisasi
+        df_all = pd.concat([df_db, hasil_df.rename(columns={
+            "Prediksi Potensi": "potensi_prediksi"
+        })], ignore_index=True)
+    
+        # Tampilkan Pie Chart distribusi prediksi potensi
+        st.markdown("#### Distribusi Potensi Prediksi (Pie Chart, Termasuk Simulasi Terbaru)")
+        fig, ax = plt.subplots(figsize=(4, 4))  # Lebih kecil dari default
+        df_all['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax, textprops={'fontsize': 10})
+        ax.set_ylabel("")  # Hapus label Y
+        ax.set_title("Distribusi Potensi Prediksi", fontsize=13)
+        st.pyplot(fig)
+    
     # Tombol download PDF di luar form!
     if 'pdf_file_siswa' in st.session_state:
         with open(st.session_state['pdf_file_siswa'], "rb") as f:
