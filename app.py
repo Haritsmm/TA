@@ -9,24 +9,20 @@ from utils.pdf_utils import generate_pdf_report
 
 # ========== INISIALISASI ==========
 init_db()
-st.set_page_config(page_title="Prediksi Potensi Akademik Siswa", layout="wide")
+st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)", layout="wide")
 
-st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan & Database)")
+st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
 st.write(
-    "Aplikasi untuk memprediksi potensi akademik siswa (Sains, Bahasa, Sosial, Teknologi) berbasis Machine Learning."
+    """
+    Aplikasi profesional untuk memprediksi potensi akademik siswa (**Sains, Bahasa, Sosial, Teknologi**) berbasis Machine Learning (Jaringan Syaraf Tiruan).
+    """
 )
 
-# ========== SIDEBAR ==========
-st.sidebar.header("Navigasi")
+st.sidebar.header("Navigasi Menu")
 mode = st.sidebar.radio(
-    "Pilih Mode",
-    ("Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Backup Database")
+    "Pilih Mode:",
+    ("Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database")
 )
-if mode == "Backup Database":
-    st.subheader("Backup Database (.db)")
-    dbfile = backup_db()
-    st.download_button("Download data_siswa.db", dbfile, file_name="data_siswa.db")
-    st.stop()
 
 # ========== LOAD DATA SAMPLE UNTUK TEMPLATE (JIKA DIPERLUKAN) ==========
 @st.cache_data
@@ -35,8 +31,8 @@ def load_sample():
     df.columns = [c.strip() for c in df.columns]
     return df
 
-# ========== MODE 1: INPUT INDIVIDU ==========
-if mode == "Input Siswa Individu":
+# ========== MODE 1: SISWA INDIVIDU ==========
+if mode == "Siswa Individu":
     st.subheader("Input Data Siswa Individu")
     with st.form("form_siswa"):
         nama = st.text_input("Nama Siswa")
@@ -52,7 +48,7 @@ if mode == "Input Siswa Individu":
         minat_bahasa = st.slider("Minat Bahasa (1-5)", 1, 5, 3)
         minat_sosial = st.slider("Minat Sosial (1-5)", 1, 5, 3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", 1, 5, 3)
-        submitted = st.form_submit_button("Simulasi")
+        submitted = st.form_submit_button("Simulasi & Simpan")
         if submitted:
             df_all = ambil_semua_data()
             if df_all.empty:
@@ -121,10 +117,16 @@ if mode == "Input Siswa Individu":
                 st.download_button("Download Laporan PDF", f, file_name=f"Laporan_{nama}.pdf", mime="application/pdf")
             os.remove(pdf_file)
 
-# ========== MODE 2: BATCH UPLOAD ==========
+# ========== MODE 2: BATCH SIMULASI ==========
 if mode == "Batch Simulasi":
-    st.subheader("Upload File CSV Data Siswa")
-    contoh = st.expander("Contoh format CSV", expanded=False)
+    st.subheader("Batch Simulasi: Upload File CSV Data Siswa")
+    st.info(
+        "Upload file CSV berisi data siswa. "
+        "Format kolom: Nama, Jenis Kelamin, Usia, Nilai Matematika, Nilai IPA, Nilai IPS, "
+        "Nilai Bahasa Indonesia, Nilai Bahasa Inggris, Nilai TIK, Minat Sains, "
+        "Minat Bahasa, Minat Sosial, Minat Teknologi, Potensi (opsional)"
+    )
+    contoh = st.expander("Contoh Format CSV", expanded=False)
     contoh.write(load_sample().head())
     uploaded_file = st.file_uploader("Upload file .csv", type=["csv"])
     if st.checkbox("Gunakan data sample"):
@@ -173,14 +175,13 @@ if mode == "Batch Simulasi":
 
 # ========== MODE 3: DATA & VISUALISASI ==========
 if mode == "Data & Visualisasi":
-    st.subheader("Database & Visualisasi")
+    st.subheader("Data Siswa & Visualisasi")
     df_db = ambil_semua_data()
     if df_db.empty:
         st.warning("Database masih kosong. Silakan input data dulu.")
     else:
         st.write(f"Jumlah seluruh data siswa dalam database: {len(df_db)}")
         st.dataframe(df_db)
-        # Visualisasi distribusi prediksi
         st.subheader("Distribusi Potensi Prediksi (Pie & Bar Chart, seluruh data database)")
         fig1, ax1 = plt.subplots()
         df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
@@ -193,7 +194,6 @@ if mode == "Data & Visualisasi":
         plt.ylabel("Jumlah Siswa")
         plt.title("Distribusi Potensi Prediksi (Bar Chart)")
         st.pyplot(fig2)
-        # Visualisasi distribusi label asli (jika tersedia)
         if df_db['potensi_asli'].notnull().any():
             st.write("Distribusi Potensi Asli (jika tersedia):")
             fig3, ax3 = plt.subplots()
@@ -201,7 +201,6 @@ if mode == "Data & Visualisasi":
             plt.title("Distribusi Potensi Asli")
             ax3.axis("equal")
             st.pyplot(fig3)
-        # Akurasi model dan classification report
         if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
             df_eva = df_db[df_db['potensi_asli'].notnull()]
             y_true = df_eva['potensi_asli']
@@ -216,6 +215,13 @@ if mode == "Data & Visualisasi":
                 st.write("Classification Report:")
                 st.dataframe(cr_df)
 
+# ========== MODE 4: DATABASE ==========
+if mode == "Database":
+    st.subheader("Backup Database (.db)")
+    dbfile = backup_db()
+    st.download_button("Download data_siswa.db", dbfile, file_name="data_siswa.db")
+    st.stop()
+
 # ========== FOOTER ==========
 st.markdown("---")
-st.markdown("Developed as Professional Academic Project | For Tugas Akhir.")
+st.markdown("Developed as Professional Academic Project.")
