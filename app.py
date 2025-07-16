@@ -134,7 +134,7 @@ if mode == "Siswa Individu":
                         'potensi_prediksi': hasil_pred,
                         'sumber': 'individu'
                     })
-                    st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}** (Label Asli: {potensi})")
+                    st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}** (Potensi: {potensi})")
                     hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
                     pdf_file = generate_pdf_report(hasil_output, f"Laporan Prediksi Siswa: {nama}")
                     st.session_state['pdf_file_siswa'] = pdf_file
@@ -155,7 +155,7 @@ if mode == "Siswa Individu":
         })], ignore_index=True)
     
         # Tampilkan Pie Chart distribusi prediksi potensi
-        st.markdown("#### Distribusi Potensi Prediksi (Pie Chart, Termasuk Simulasi Terbaru)")
+        st.markdown("#### Distribusi Potensi Prediksi")
         fig, ax = plt.subplots(figsize=(4, 4))  # Lebih kecil dari default
         df_all['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax, textprops={'fontsize': 10})
         ax.set_ylabel("")  # Hapus label Y
@@ -182,7 +182,7 @@ if mode == "Batch Simulasi":
     st.info(
         "Upload file CSV berisi data siswa. Format kolom: Nama, Jenis Kelamin, Usia, Nilai Matematika, Nilai IPA, Nilai IPS, "
         "Nilai Bahasa Indonesia, Nilai Bahasa Inggris, Nilai TIK, Minat Sains, "
-        "Minat Bahasa, Minat Sosial, Minat Teknologi, Potensi (opsional)"
+        "Minat Bahasa, Minat Sosial, Minat Teknologi, Potensi"
     )
     contoh = st.expander("Contoh Format CSV", expanded=False)
     contoh.write(load_sample().head())
