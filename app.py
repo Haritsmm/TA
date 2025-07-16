@@ -48,6 +48,7 @@ if mode == "Siswa Individu":
         minat_bahasa = st.selectbox("Minat Bahasa (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
         minat_sosial = st.selectbox("Minat Sosial (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
         minat_teknologi = st.selectbox("Minat Teknologi (1-5)", options=[None, 1, 2, 3, 4, 5], format_func=lambda x: x if x else "Pilih")
+        
         submitted = st.form_submit_button("Simulasi & Simpan")
         if submitted:
             error = None
