@@ -44,15 +44,12 @@ if mode == "Siswa Individu":
         nilai_bindo = st.number_input("Nilai Bahasa Indonesia", min_value=0, max_value=100, value=None, format="%d")
         nilai_bing = st.number_input("Nilai Bahasa Inggris", min_value=0, max_value=100, value=None, format="%d")
         nilai_tik = st.number_input("Nilai TIK", min_value=0, max_value=100, value=None, format="%d")
-        
-        # Slider minat, default di tengah (3)
         minat_sains = st.slider("Minat Sains (1-5)", min_value=1, max_value=5, value=3)
         minat_bahasa = st.slider("Minat Bahasa (1-5)", min_value=1, max_value=5, value=3)
         minat_sosial = st.slider("Minat Sosial (1-5)", min_value=1, max_value=5, value=3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", min_value=1, max_value=5, value=3)
 
         submitted = st.form_submit_button("Simulasi & Simpan")
-
         if submitted:
             if (not nama or not jenis_kelamin or usia is None or 
                 nilai_mtk is None or nilai_ipa is None or nilai_ips is None or 
@@ -61,7 +58,8 @@ if mode == "Siswa Individu":
             else:
                 df_all = ambil_semua_data()
                 if df_all.empty:
-                    df_all = load_sample()
+                    # Load sample jika database masih kosong
+                    df_all = pd.read_csv('data/data_siswa_smp.csv')
                     df_all.rename(columns={
                         "Nilai Matematika": "nilai_mtk", "Nilai IPA": "nilai_ipa", "Nilai IPS": "nilai_ips",
                         "Nilai Bahasa Indonesia": "nilai_bindo", "Nilai Bahasa Inggris": "nilai_bing", "Nilai TIK": "nilai_tik",
@@ -85,7 +83,22 @@ if mode == "Siswa Individu":
                     'minat_teknologi': minat_teknologi
                 }
                 hasil_pred = single_predict(input_dict, mlp, scaler, label_encoder)
-                st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}**")
+                st.session_state['hasil_prediksi_siswa'] = {
+                    "Nama": nama,
+                    "Jenis Kelamin": jenis_kelamin,
+                    "Usia": usia,
+                    "Nilai Matematika": nilai_mtk,
+                    "Nilai IPA": nilai_ipa,
+                    "Nilai IPS": nilai_ips,
+                    "Nilai Bahasa Indonesia": nilai_bindo,
+                    "Nilai Bahasa Inggris": nilai_bing,
+                    "Nilai TIK": nilai_tik,
+                    "Minat Sains": minat_sains,
+                    "Minat Bahasa": minat_bahasa,
+                    "Minat Sosial": minat_sosial,
+                    "Minat Teknologi": minat_teknologi,
+                    "Prediksi Potensi": hasil_pred
+                }
                 # Simpan ke database
                 simpan_data_siswa({
                     'nama': nama,
@@ -105,26 +118,25 @@ if mode == "Siswa Individu":
                     'potensi_prediksi': hasil_pred,
                     'sumber': 'individu'
                 })
-                hasil_output = pd.DataFrame([{
-                    "Nama": nama,
-                    "Jenis Kelamin": jenis_kelamin,
-                    "Usia": usia,
-                    "Nilai Matematika": nilai_mtk,
-                    "Nilai IPA": nilai_ipa,
-                    "Nilai IPS": nilai_ips,
-                    "Nilai Bahasa Indonesia": nilai_bindo,
-                    "Nilai Bahasa Inggris": nilai_bing,
-                    "Nilai TIK": nilai_tik,
-                    "Minat Sains": minat_sains,
-                    "Minat Bahasa": minat_bahasa,
-                    "Minat Sosial": minat_sosial,
-                    "Minat Teknologi": minat_teknologi,
-                    "Prediksi Potensi": hasil_pred
-                }])
+                st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}**")
+                # Siapkan file PDF
+                hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
                 pdf_file = generate_pdf_report(hasil_output, f"Laporan Prediksi Siswa: {nama}")
-                with open(pdf_file, "rb") as f:
-                    st.download_button("Download Laporan PDF", f, file_name=f"Laporan_{nama}.pdf", mime="application/pdf")
-                os.remove(pdf_file)
+                st.session_state['pdf_file_siswa'] = pdf_file
+
+    # Tombol download PDF di luar form!
+    if 'pdf_file_siswa' in st.session_state:
+        with open(st.session_state['pdf_file_siswa'], "rb") as f:
+            st.download_button(
+                "Download Laporan PDF",
+                f,
+                file_name="Laporan_Siswa.pdf",
+                mime="application/pdf"
+            )
+        # Hapus file dan session_state setelah download (supaya tidak numpuk)
+        os.remove(st.session_state['pdf_file_siswa'])
+        del st.session_state['pdf_file_siswa']
+        del st.session_state['hasil_prediksi_siswa']
 
 # ========== MODE 2: BATCH SIMULASI ==========
 if mode == "Batch Simulasi":
