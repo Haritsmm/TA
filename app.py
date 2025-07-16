@@ -13,15 +13,14 @@ st.set_page_config(page_title="Prediksi Potensi Akademik Siswa", layout="wide")
 
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan & Database)")
 st.write(
-    "Aplikasi profesional untuk memprediksi potensi akademik siswa (Sains, Bahasa, Sosial, Teknologi) berbasis Machine Learning. "
-    "Mendukung database, input individu/batch, visualisasi, laporan PDF, backup data."
+    "Aplikasi untuk memprediksi potensi akademik siswa (Sains, Bahasa, Sosial, Teknologi) berbasis Machine Learning."
 )
 
 # ========== SIDEBAR ==========
 st.sidebar.header("Navigasi")
 mode = st.sidebar.radio(
     "Pilih Mode",
-    ("Input Siswa Individu", "Batch Upload & Simulasi", "Data & Visualisasi", "Backup Database")
+    ("Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Backup Database")
 )
 if mode == "Backup Database":
     st.subheader("Backup Database (.db)")
@@ -53,7 +52,7 @@ if mode == "Input Siswa Individu":
         minat_bahasa = st.slider("Minat Bahasa (1-5)", 1, 5, 3)
         minat_sosial = st.slider("Minat Sosial (1-5)", 1, 5, 3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", 1, 5, 3)
-        submitted = st.form_submit_button("Simulasi & Simpan")
+        submitted = st.form_submit_button("Simulasi")
         if submitted:
             df_all = ambil_semua_data()
             if df_all.empty:
@@ -123,7 +122,7 @@ if mode == "Input Siswa Individu":
             os.remove(pdf_file)
 
 # ========== MODE 2: BATCH UPLOAD ==========
-if mode == "Batch Upload & Simulasi":
+if mode == "Batch Simulasi":
     st.subheader("Upload File CSV Data Siswa")
     contoh = st.expander("Contoh format CSV", expanded=False)
     contoh.write(load_sample().head())
@@ -219,5 +218,4 @@ if mode == "Data & Visualisasi":
 
 # ========== FOOTER ==========
 st.markdown("---")
-st.markdown("**Database file:** `db/data_siswa.db` &mdash; Download backup dari sidebar untuk migrasi/arsip.")
-st.markdown("Developed as Professional Academic Project | Powered by Streamlit, SQLite, scikit-learn.")
+st.markdown("Developed as Professional Academic Project | For Tugas Akhir.")
