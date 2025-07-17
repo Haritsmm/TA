@@ -341,7 +341,7 @@ with col1:
         autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 10}
     )
     ax1.set_ylabel("")
-    ax1.set_title("Pie Potensi Prediksi", fontsize=12)
+    ax1.set_title("Potensi Prediksi", fontsize=12)
     st.pyplot(fig1)
 
 with col2:
@@ -349,17 +349,17 @@ with col2:
     df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
     ax2.set_xlabel("Potensi")
     ax2.set_ylabel("Jumlah Siswa")
-    ax2.set_title("Bar Potensi Prediksi", fontsize=12)
+    ax2.set_title("Potensi Prediksi", fontsize=12)
     st.pyplot(fig2)
 
 with col3:
     if df_db['potensi_asli'].notnull().any():
         fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
         df_db['potensi_asli'].value_counts().plot.pie(
-            autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 10}
+            autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 8}
         )
         ax3.set_ylabel("")
-        ax3.set_title("Pie Potensi Asli", fontsize=12)
+        ax3.set_title("Potensi Asli", fontsize=10)
         st.pyplot(fig3)
     else:
         st.info("Tidak ada data Potensi Asli.")
