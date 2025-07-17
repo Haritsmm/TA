@@ -29,12 +29,21 @@ def cek_kunci_input(password):
     else:
         st.error("Kunci salah! Coba lagi.")
 
+# ========== SIDEBAR ==========
+
 with st.sidebar:
     if st.button("🔑 Key", help="Klik untuk membuka kunci", use_container_width=True):
         st.session_state.show_key_popup = True
     st.header("Menu")
 
-# POP-UP MODAL SEDERHANA (tidak membungkus widget, hanya logika blok)
+# ========== MENU PILIHAN ==========
+
+MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
+MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
+MENU_SINGLE = ["Siswa Individu"]
+
+# ========== MODAL POP-UP KEY ==========
+
 if st.session_state.show_key_popup:
     st.markdown("""
         <style>
@@ -54,7 +63,6 @@ if st.session_state.show_key_popup:
         </style>
         <div class="modal-overlay"></div>
     """, unsafe_allow_html=True)
-    # Modal box di atas overlay
     st.markdown('<div class="modal-content">', unsafe_allow_html=True)
     st.markdown("### 🔑 Masukkan Kunci Akses")
     password_input = st.text_input("Password Kunci", type="password", key="password_key_input")
@@ -66,9 +74,22 @@ if st.session_state.show_key_popup:
         if st.button("Batal"):
             st.session_state.show_key_popup = False
     st.markdown("</div>", unsafe_allow_html=True)
-    st.stop()
+    st.stop()  # stop eksekusi Streamlit di sini, agar menu di bawah tidak jalan saat pop-up aktif
 
-# ========== MAIN APP (JUDUL & MENU) ==========
+# ========== MENU PILIHAN SETELAH KUNCI ==========
+
+if st.session_state.akses == "semua":
+    menu_options = MENU_ALL
+elif st.session_state.akses == "cadangan":
+    menu_options = MENU_LIMITED
+else:
+    menu_options = MENU_SINGLE
+
+# ========== PAGE SETUP & JUDUL ==========
+
+st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)", layout="wide")
+init_db()
+
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
 st.write(
     """
@@ -82,6 +103,7 @@ mode = st.sidebar.radio(
     key="menu"
 )
 
+# ========== LOGOUT ==========
 if st.session_state.akses:
     if st.button("Kunci Ulang (Logout)"):
         st.session_state.akses = None
