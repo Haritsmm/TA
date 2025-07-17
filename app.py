@@ -330,15 +330,13 @@ if mode == "Data & Visualisasi":
         df_db_rename = df_db.rename(columns=nama_kolom_map)
         st.dataframe(df_db_rename)
 
-st.subheader("Distribusi Potensi Prediksi")
-
-# --- Tampilkan 3 chart secara sejajar (horizontal) ---
+st.subheader("Distribusi Potensi Prediksi")-
 col1, col2, col3 = st.columns(3)
 
 with col1:
     fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
     df_db['potensi_prediksi'].value_counts().plot.pie(
-        autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 10}
+        autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 15}
     )
     ax1.set_ylabel("")
     ax1.set_title("Potensi Prediksi", fontsize=13)
@@ -349,7 +347,7 @@ with col2:
     df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
     ax2.set_xlabel("Potensi")
     ax2.set_ylabel("Jumlah Siswa")
-    ax2.set_title("Potensi Prediksi", fontsize=13)
+    ax2.set_title("Jumlah Potensi Prediksi", fontsize=15)
     st.pyplot(fig2)
 
 with col3:
