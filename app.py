@@ -331,6 +331,12 @@ if mode == "Data & Visualisasi":
         st.dataframe(df_db_rename)
 
 st.subheader("Distribusi Potensi Prediksi")
+
+df_db = ambil_semua_data()
+
+if df_db.empty:
+    st.warning("Database masih kosong. Silakan input data dulu.")
+else:
 col1, col2, col3 = st.columns(3)
 
 with col1:
