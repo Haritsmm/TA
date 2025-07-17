@@ -9,8 +9,8 @@ from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_
 from utils.pdf_utils import generate_pdf_report
 
 # ========== SETTING KUNCI ==========
-KUNCI_UTAMA = "superadmin2025"
-KUNCI_CADANGAN = "admin2025"
+KUNCI_UTAMA = "admin2025"
+KUNCI_CADANGAN = "guru2025"
 
 if "akses" not in st.session_state:
     st.session_state.akses = None
@@ -32,10 +32,10 @@ with st.sidebar:
     password_input = st.text_input(
         "Masukkan Kunci Akses", 
         type="password", 
-        placeholder="Password Kunci",
+        placeholder="Masukkan Kunci",
         key="kunci_password"
     )
-    key_clicked = st.button("Buka Kunci", use_container_width=True)
+    key_clicked = st.button("Konfirmasi", use_container_width=True)
     if key_clicked:
         if password_input == KUNCI_UTAMA:
             st.session_state.akses = "semua"
