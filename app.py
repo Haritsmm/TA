@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 import utils.db_utils as dbu
 import os
 
@@ -9,12 +8,11 @@ from utils.model_utils import train_and_predict, single_predict, FTR, preprocess
 from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
 from utils.pdf_utils import generate_pdf_report
 
-
 # ========== KUNCI ==========
+
 KUNCI_UTAMA = "superadmin2025"
 KUNCI_CADANGAN = "admin2025"
 
-# Cek status login di session_state
 if "akses" not in st.session_state:
     st.session_state.akses = None
 
@@ -29,7 +27,6 @@ def cek_kunci():
         st.session_state.akses = None
         st.error("Kunci salah! Coba lagi.")
 
-# Hanya tampilkan form jika belum berhasil login
 if not st.session_state.akses:
     with st.form("form_kunci"):
         st.write("Masukkan Kunci untuk membuka menu lainnya:")
@@ -37,12 +34,11 @@ if not st.session_state.akses:
         submit = st.form_submit_button("Buka Kunci", on_click=cek_kunci)
     st.info("Saat ini hanya **Siswa Individu** yang dapat diakses.")
 
-# Daftar menu dengan kontrol akses
+# -- Menu sesuai kunci akses --
 MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
 MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
 MENU_SINGLE = ["Siswa Individu"]
 
-# Tentukan menu yang bisa dipilih
 if st.session_state.akses == "semua":
     menu_options = MENU_ALL
 elif st.session_state.akses == "cadangan":
@@ -50,21 +46,8 @@ elif st.session_state.akses == "cadangan":
 else:
     menu_options = MENU_SINGLE
 
-mode = st.sidebar.radio(
-    "Pilih Menu:",
-    menu_options,
-    key="menu"
-)
-
-if st.session_state.akses:
-    if st.button("Kunci Ulang (Logout)"):
-        st.session_state.akses = None
-        st.session_state.password = ""
-        st.experimental_rerun()
-
-# ========== INISIALISASI ==========
-init_db()
 st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)", layout="wide")
+init_db()
 
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
 st.write(
@@ -76,8 +59,15 @@ st.write(
 st.sidebar.header("Menu")
 mode = st.sidebar.radio(
     "Pilih Menu:",
-    ("Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database")
+    menu_options,
+    key="menu"
 )
+
+if st.session_state.akses:
+    if st.button("Kunci Ulang (Logout)"):
+        st.session_state.akses = None
+        st.session_state.password = ""
+        st.experimental_rerun()
 
 @st.cache_data
 def load_sample():
