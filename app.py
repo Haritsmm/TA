@@ -332,26 +332,42 @@ if mode == "Data & Visualisasi":
         st.subheader("Distribusi Potensi Prediksi")
         fig1, ax1 = plt.subplots(figsize=(5, 5))
         df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
-        plt.title("Distribusi Potensi Prediksi")
-        ax1.axis("equal")
-        st.pyplot(fig1)
-        fig2, ax2 = plt.subplots(figsize=(6, 3))
-        df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
-        plt.xlabel("Potensi")
-        plt.ylabel("Jumlah Siswa")
-        plt.title("Distribusi Potensi Prediksi (Bar Chart)")
-        st.pyplot(fig2)
-        if df_db['potensi_asli'].notnull().any():
-            st.write("Distribusi Potensi Asli (jika tersedia):")
-            fig3, ax3 = plt.subplots(figsize=(5, 5))
-            df_db['potensi_asli'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax3)
-            plt.title("Distribusi Potensi")
-            ax3.axis("equal")
-            st.pyplot(fig3)
-        if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
-            df_eva = df_db[df_db['potensi_asli'].notnull()]
-            y_true = df_eva['potensi_asli']
-            y_pred = df_eva['potensi_prediksi']
+        st.subheader("Distribusi Potensi Prediksi")
+        
+        # Buat 3 kolom horizontal
+        col1, col2, col3 = st.columns(3)
+        
+        # Chart 1: Pie chart potensi prediksi
+        with col1:
+            fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
+            df_db['potensi_prediksi'].value_counts().plot.pie(
+                autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 10}
+            )
+            ax1.set_ylabel("")
+            ax1.set_title("Pie Potensi Prediksi", fontsize=12)
+            st.pyplot(fig1)
+        
+        # Chart 2: Bar chart potensi prediksi
+        with col2:
+            fig2, ax2 = plt.subplots(figsize=(3.5, 2.2))
+            df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
+            ax2.set_xlabel("Potensi")
+            ax2.set_ylabel("Jumlah Siswa")
+            ax2.set_title("Bar Potensi Prediksi", fontsize=12)
+            st.pyplot(fig2)
+        
+        # Chart 3: Pie chart potensi asli (jika ada)
+        with col3:
+            if df_db['potensi_asli'].notnull().any():
+                fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
+                df_db['potensi_asli'].value_counts().plot.pie(
+                    autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 10}
+                )
+                ax3.set_ylabel("")
+                ax3.set_title("Pie Potensi Asli", fontsize=12)
+                st.pyplot(fig3)
+            else:
+                st.info("Tidak ada data Potensi Asli.")
             st.subheader("Evaluasi Model")
             if len(y_true.unique()) > 1:
                 from sklearn.metrics import accuracy_score, classification_report
