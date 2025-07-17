@@ -329,11 +329,8 @@ if mode == "Data & Visualisasi":
         }
         df_db_rename = df_db.rename(columns=nama_kolom_map)
         st.dataframe(df_db_rename)
+
         st.subheader("Distribusi Potensi Prediksi")
-        fig1, ax1 = plt.subplots(figsize=(5, 5))
-        df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
-        st.subheader("Distribusi Potensi Prediksi")
-        
         # Buat 3 kolom horizontal
         col1, col2, col3 = st.columns(3)
         
