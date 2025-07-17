@@ -331,28 +331,35 @@ if mode == "Data & Visualisasi":
         st.dataframe(df_db_rename)
 
         st.subheader("Distribusi Potensi Prediksi")
-        fig1, ax1 = plt.subplots(figsize=(5, 5))
-        df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
-        plt.title("Distribusi Potensi Prediksi")
-        ax1.axis("equal")
+
+        # Pie chart prediksi (ukuran lebih kecil)
+        fig1, ax1 = plt.subplots(figsize=(3.5, 3.5))  # Ubah di sini! (misal 3.5x3.5)
+        df_db['potensi_prediksi'].value_counts().plot.pie(
+            autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 10}
+        )
+        ax1.set_ylabel("")  # Hapus label Y
+        ax1.set_title("Distribusi Potensi Prediksi", fontsize=13)
         st.pyplot(fig1)
-        fig2, ax2 = plt.subplots(figsize=(6, 3))
+        
+        # Bar chart prediksi
+        fig2, ax2 = plt.subplots(figsize=(4.5, 2.2))  # Ubah di sini juga!
         df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
-        plt.xlabel("Potensi")
-        plt.ylabel("Jumlah Siswa")
-        plt.title("Distribusi Potensi Prediksi (Bar Chart)")
+        ax2.set_xlabel("Potensi")
+        ax2.set_ylabel("Jumlah Siswa")
+        ax2.set_title("Distribusi Potensi Prediksi (Bar Chart)", fontsize=12)
         st.pyplot(fig2)
+        
+        # Pie chart Potensi Asli (jika ada)
         if df_db['potensi_asli'].notnull().any():
             st.write("Distribusi Potensi Asli (jika tersedia):")
-            fig3, ax3 = plt.subplots(figsize=(5, 5))
-            df_db['potensi_asli'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax3)
-            plt.title("Distribusi Potensi")
-            ax3.axis("equal")
+            fig3, ax3 = plt.subplots(figsize=(3.5, 3.5))
+            df_db['potensi_asli'].value_counts().plot.pie(
+                autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 10}
+            )
+            ax3.set_ylabel("")
+            ax3.set_title("Distribusi Potensi", fontsize=13)
             st.pyplot(fig3)
-        if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
-            df_eva = df_db[df_db['potensi_asli'].notnull()]
-            y_true = df_eva['potensi_asli']
-            y_pred = df_eva['potensi_prediksi']
+
             st.subheader("Evaluasi Model")
             if len(y_true.unique()) > 1:
                 from sklearn.metrics import accuracy_score, classification_report
