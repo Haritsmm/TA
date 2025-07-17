@@ -1,53 +1,82 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import utils.db_utils as dbu
 import os
 
 from utils.model_utils import train_and_predict, single_predict, FTR, preprocess_df
 from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
 from utils.pdf_utils import generate_pdf_report
 
-# ========== KUNCI AKSES ==========
+# ========== KUNCI ==========
 KUNCI_UTAMA = "superadmin2025"
 KUNCI_CADANGAN = "admin2025"
 
 if "akses" not in st.session_state:
     st.session_state.akses = None
+if "show_key_popup" not in st.session_state:
+    st.session_state.show_key_popup = False
 
-def cek_kunci(password):
+def cek_kunci_input(password):
     if password == KUNCI_UTAMA:
         st.session_state.akses = "semua"
+        st.session_state.show_key_popup = False
         st.success("Kunci utama benar! Seluruh menu terbuka.")
     elif password == KUNCI_CADANGAN:
         st.session_state.akses = "cadangan"
+        st.session_state.show_key_popup = False
         st.success("Kunci cadangan benar! Menu Batch Simulasi & Data & Visualisasi terbuka.")
     else:
         st.error("Kunci salah! Coba lagi.")
 
-# ========== LOCKSCREEN ==========
+# ========== SIDEBAR ==========
 
-if not st.session_state.akses:
-    st.set_page_config(page_title="Prediksi Potensi Akademik Siswa", layout="wide")
-    # Logo/gambar jika ingin
-    st.image("https://cdn-icons-png.flaticon.com/512/3585/3585045.png", width=96)
-    st.markdown("""
-        <div style="text-align:center">
-            <h2 style="margin-bottom:0.5em;">🔒 Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)</h2>
-            <span style="color:#aaa;">Silakan masukkan kunci akses terlebih dahulu</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with st.form("form_kunci"):
-        password = st.text_input("Password Kunci", type="password")
-        submitted = st.form_submit_button("Masuk")
-        if submitted:
-            cek_kunci(password)
-    st.stop()  # Hentikan eksekusi, menu utama tidak bisa diakses sampai login
+with st.sidebar:
+    if st.button("🔑 Key", help="Klik untuk membuka kunci", use_container_width=True):
+        st.session_state.show_key_popup = True
+    st.header("Menu")
 
-# ========== SETELAH LOGIN (AKSES DIBUKA) ==========
+# ========== MENU PILIHAN ==========
 
 MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
 MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
 MENU_SINGLE = ["Siswa Individu"]
+
+# ========== MODAL POP-UP KEY ==========
+
+if st.session_state.show_key_popup:
+    st.markdown("""
+        <style>
+            .modal-overlay {
+                position:fixed; top:0; left:0; right:0; bottom:0;
+                background:rgba(30,32,38,0.8); z-index:9999;
+            }
+            .modal-content {
+                position:fixed; top:24%; left:0; right:0;
+                margin-left:auto; margin-right:auto;
+                background:#23272f; border-radius:16px;
+                padding:32px 28px 24px 28px;
+                max-width:380px;
+                box-shadow:0 8px 32px rgba(0,0,0,.45);
+                z-index:10000;
+            }
+        </style>
+        <div class="modal-overlay"></div>
+    """, unsafe_allow_html=True)
+    st.markdown('<div class="modal-content">', unsafe_allow_html=True)
+    st.markdown("### 🔑 Masukkan Kunci Akses")
+    password_input = st.text_input("Password Kunci", type="password", key="password_key_input")
+    col1, col2 = st.columns([1,1])
+    with col1:
+        if st.button("Konfirmasi"):
+            cek_kunci_input(password_input)
+    with col2:
+        if st.button("Batal"):
+            st.session_state.show_key_popup = False
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()  # stop eksekusi Streamlit di sini, agar menu di bawah tidak jalan saat pop-up aktif
+
+# ========== MENU PILIHAN SETELAH KUNCI ==========
 
 if st.session_state.akses == "semua":
     menu_options = MENU_ALL
@@ -56,20 +85,10 @@ elif st.session_state.akses == "cadangan":
 else:
     menu_options = MENU_SINGLE
 
+# ========== PAGE SETUP & JUDUL ==========
+
 st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)", layout="wide")
 init_db()
-
-st.sidebar.header("Menu")
-mode = st.sidebar.radio(
-    "Pilih Menu:",
-    menu_options,
-    key="menu"
-)
-
-# Tombol logout (kunci ulang)
-if st.button("Kunci Ulang (Logout)"):
-    st.session_state.akses = None
-    st.experimental_rerun()
 
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
 st.write(
@@ -77,6 +96,20 @@ st.write(
     Aplikasi untuk memprediksi potensi akademik siswa (**Sains, Bahasa, Sosial, Teknologi**) berbasis Machine Learning (Jaringan Syaraf Tiruan).
     """
 )
+
+mode = st.sidebar.radio(
+    "Pilih Menu:",
+    menu_options,
+    key="menu"
+)
+
+# ========== LOGOUT ==========
+if st.session_state.akses:
+    if st.button("Kunci Ulang (Logout)"):
+        st.session_state.akses = None
+        st.session_state.show_key_popup = False
+        st.session_state.password_key_input = ""
+        st.experimental_rerun()
 
 @st.cache_data
 def load_sample():
