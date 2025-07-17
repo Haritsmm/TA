@@ -78,6 +78,14 @@ mode = st.sidebar.radio(
     key="menu"
 )
 
+# ========== LOGOUT ==========
+if st.session_state.akses:
+    if st.button("Kunci Ulang (Logout)"):
+        st.session_state.akses = None
+        st.session_state.show_key_popup = False
+        st.session_state.password_key_input = ""
+        st.experimental_rerun()
+
 @st.cache_data
 def load_sample():
     df = pd.read_csv('data/data_siswa_smp.csv')
@@ -330,34 +338,6 @@ if mode == "Data & Visualisasi":
         df_db_rename = df_db.rename(columns=nama_kolom_map)
         st.dataframe(df_db_rename)
 
-st.subheader("Distribusi Potensi Prediksi")
-if mode == "Data & Visualisasi":
-    st.subheader("Data Siswa & Visualisasi")
-  #  st.caption(f"DB Path: {os.path.abspath(dbu.DB_PATH)}")
-  #  st.caption(f"DB Exists? {'Yes' if os.path.exists(dbu.DB_PATH) else 'No'}")
-    df_db = ambil_semua_data()
-    if df_db.empty:
-        st.warning("Database masih kosong. Silakan input data dulu.")
-    else:
-        # Tombol Kosongkan Database
-        if st.button("Kosongkan Database", type="primary"):
-            kosongkan_database()
-            st.warning("Database berhasil dikosongkan! Silakan refresh halaman.")
-
-        st.write(f"Jumlah seluruh data siswa dalam database: {len(df_db)}")
-        # Mapping nama kolom
-        nama_kolom_map = {
-            'id': 'ID', 'nama': 'Nama', 'jenis_kelamin': 'Jenis Kelamin',
-            'usia': 'Usia', 'nilai_mtk': 'Nilai Matematika', 'nilai_ipa': 'Nilai IPA',
-            'nilai_ips': 'Nilai IPS', 'nilai_bindo': 'Nilai Bahasa Indonesia',
-            'nilai_bing': 'Nilai Bahasa Inggris', 'nilai_tik': 'Nilai TIK',
-            'minat_sains': 'Minat Sains', 'minat_bahasa': 'Minat Bahasa',
-            'minat_sosial': 'Minat Sosial', 'minat_teknologi': 'Minat Teknologi',
-            'potensi_asli': 'Potensi Asli', 'potensi_prediksi': 'Potensi Prediksi',
-            'sumber': 'Sumber', 'waktu_input': 'Waktu Input'
-        }
-        df_db_rename = df_db.rename(columns=nama_kolom_map)
-        st.dataframe(df_db_rename)
         st.subheader("Distribusi Potensi Prediksi")
         fig1, ax1 = plt.subplots(figsize=(5, 5))
         df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
@@ -390,6 +370,7 @@ if mode == "Data & Visualisasi":
                 cr_df = pd.DataFrame(cr_db).T.iloc[:-3, :2]
                 st.write("Classification Report:")
                 st.dataframe(cr_df)
+
 # ========== MODE 4: DATABASE ==========
 if mode == "Database":
     st.subheader("Backup Database (.db)")
