@@ -9,30 +9,31 @@ from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_
 from utils.pdf_utils import generate_pdf_report
 
 # ========== KUNCI ==========
-
 KUNCI_UTAMA = "superadmin2025"
 KUNCI_CADANGAN = "admin2025"
 
 if "akses" not in st.session_state:
     st.session_state.akses = None
+if "show_key_popup" not in st.session_state:
+    st.session_state.show_key_popup = False
 
-def cek_kunci():
-    if st.session_state.password == KUNCI_UTAMA:
+def cek_kunci_input(password):
+    if password == KUNCI_UTAMA:
         st.session_state.akses = "semua"
         st.success("Kunci utama benar! Seluruh menu terbuka.")
-    elif st.session_state.password == KUNCI_CADANGAN:
+        st.session_state.show_key_popup = False
+    elif password == KUNCI_CADANGAN:
         st.session_state.akses = "cadangan"
         st.success("Kunci cadangan benar! Menu Batch Simulasi & Data & Visualisasi terbuka.")
+        st.session_state.show_key_popup = False
     else:
-        st.session_state.akses = None
         st.error("Kunci salah! Coba lagi.")
 
-if not st.session_state.akses:
-    with st.form("form_kunci"):
-        st.write("Masukkan Kunci untuk membuka menu lainnya:")
-        st.session_state.password = st.text_input("Password Kunci", type="password")
-        submit = st.form_submit_button("Buka Kunci", on_click=cek_kunci)
-    st.info("Saat ini hanya **Siswa Individu** yang dapat diakses.")
+# ===== SIDEBAR - Key Button =====
+with st.sidebar:
+    if st.button("🔑 Key", help="Klik untuk membuka kunci", use_container_width=True):
+        st.session_state.show_key_popup = True
+    st.header("Menu")
 
 # -- Menu sesuai kunci akses --
 MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
@@ -46,9 +47,43 @@ elif st.session_state.akses == "cadangan":
 else:
     menu_options = MENU_SINGLE
 
+# ========== SETUP STREAMLIT PAGE ==========
 st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)", layout="wide")
 init_db()
 
+# ===== MODAL POP-UP KEY =====
+if st.session_state.show_key_popup:
+    st.markdown(
+        """
+        <style>
+        .overlay-modal {
+            position:fixed; top:0; left:0; right:0; bottom:0;
+            background:rgba(30,32,38,0.75); z-index:9999;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .popup-modal {
+            background:#23272f; border-radius:12px; padding:32px 36px 24px 36px;
+            min-width:320px; box-shadow:0 8px 32px rgba(0,0,0,.45);
+        }
+        </style>
+        <div class="overlay-modal">
+            <div class="popup-modal">
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown("### 🔑 Masukkan Kunci Akses")
+    password_input = st.text_input("Password Kunci", type="password", key="password_key_input")
+    col1, col2 = st.columns([1,1])
+    with col1:
+        if st.button("Konfirmasi"):
+            cek_kunci_input(password_input)
+    with col2:
+        if st.button("Batal"):
+            st.session_state.show_key_popup = False
+    st.markdown("</div></div>", unsafe_allow_html=True)
+    st.stop()  # Agar hanya modal yang tampil saat terbuka
+
+# ========== MAIN APP (JUDUL & MENU) ==========
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
 st.write(
     """
@@ -56,7 +91,6 @@ st.write(
     """
 )
 
-st.sidebar.header("Menu")
 mode = st.sidebar.radio(
     "Pilih Menu:",
     menu_options,
@@ -66,7 +100,8 @@ mode = st.sidebar.radio(
 if st.session_state.akses:
     if st.button("Kunci Ulang (Logout)"):
         st.session_state.akses = None
-        st.session_state.password = ""
+        st.session_state.show_key_popup = False
+        st.session_state.password_key_input = ""
         st.experimental_rerun()
 
 @st.cache_data
