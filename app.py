@@ -20,57 +20,42 @@ if "show_key_popup" not in st.session_state:
 def cek_kunci_input(password):
     if password == KUNCI_UTAMA:
         st.session_state.akses = "semua"
-        st.success("Kunci utama benar! Seluruh menu terbuka.")
         st.session_state.show_key_popup = False
+        st.success("Kunci utama benar! Seluruh menu terbuka.")
     elif password == KUNCI_CADANGAN:
         st.session_state.akses = "cadangan"
-        st.success("Kunci cadangan benar! Menu Batch Simulasi & Data & Visualisasi terbuka.")
         st.session_state.show_key_popup = False
+        st.success("Kunci cadangan benar! Menu Batch Simulasi & Data & Visualisasi terbuka.")
     else:
         st.error("Kunci salah! Coba lagi.")
 
-# ===== SIDEBAR - Key Button =====
 with st.sidebar:
     if st.button("🔑 Key", help="Klik untuk membuka kunci", use_container_width=True):
         st.session_state.show_key_popup = True
     st.header("Menu")
 
-# -- Menu sesuai kunci akses --
-MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
-MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
-MENU_SINGLE = ["Siswa Individu"]
-
-if st.session_state.akses == "semua":
-    menu_options = MENU_ALL
-elif st.session_state.akses == "cadangan":
-    menu_options = MENU_LIMITED
-else:
-    menu_options = MENU_SINGLE
-
-# ========== SETUP STREAMLIT PAGE ==========
-st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)", layout="wide")
-init_db()
-
-# ===== MODAL POP-UP KEY =====
+# POP-UP MODAL SEDERHANA (tidak membungkus widget, hanya logika blok)
 if st.session_state.show_key_popup:
-    st.markdown(
-        """
+    st.markdown("""
         <style>
-        .overlay-modal {
-            position:fixed; top:0; left:0; right:0; bottom:0;
-            background:rgba(30,32,38,0.75); z-index:9999;
-            display:flex; align-items:center; justify-content:center;
-        }
-        .popup-modal {
-            background:#23272f; border-radius:12px; padding:32px 36px 24px 36px;
-            min-width:320px; box-shadow:0 8px 32px rgba(0,0,0,.45);
-        }
+            .modal-overlay {
+                position:fixed; top:0; left:0; right:0; bottom:0;
+                background:rgba(30,32,38,0.8); z-index:9999;
+            }
+            .modal-content {
+                position:fixed; top:24%; left:0; right:0;
+                margin-left:auto; margin-right:auto;
+                background:#23272f; border-radius:16px;
+                padding:32px 28px 24px 28px;
+                max-width:380px;
+                box-shadow:0 8px 32px rgba(0,0,0,.45);
+                z-index:10000;
+            }
         </style>
-        <div class="overlay-modal">
-            <div class="popup-modal">
-        """,
-        unsafe_allow_html=True
-    )
+        <div class="modal-overlay"></div>
+    """, unsafe_allow_html=True)
+    # Modal box di atas overlay
+    st.markdown('<div class="modal-content">', unsafe_allow_html=True)
     st.markdown("### 🔑 Masukkan Kunci Akses")
     password_input = st.text_input("Password Kunci", type="password", key="password_key_input")
     col1, col2 = st.columns([1,1])
@@ -80,8 +65,8 @@ if st.session_state.show_key_popup:
     with col2:
         if st.button("Batal"):
             st.session_state.show_key_popup = False
-    st.markdown("</div></div>", unsafe_allow_html=True)
-    st.stop()  # Agar hanya modal yang tampil saat terbuka
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
 
 # ========== MAIN APP (JUDUL & MENU) ==========
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
