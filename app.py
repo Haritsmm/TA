@@ -331,35 +331,46 @@ if mode == "Data & Visualisasi":
         st.dataframe(df_db_rename)
 
 st.subheader("Distribusi Potensi Prediksi")
-
-# --- Tampilkan 3 chart secara sejajar (horizontal) ---
 col1, col2, col3 = st.columns(3)
 
 with col1:
     fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
-    df_db['potensi_prediksi'].value_counts().plot.pie(
-        autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 10}
+    wedges, texts, autotexts = ax1.pie(
+        df_db['potensi_prediksi'].value_counts(),
+        autopct='%1.0f%%',
+        textprops={'fontsize': 11},
+        startangle=90
     )
-    ax1.set_ylabel("")
-    ax1.set_title("Pie Potensi Prediksi", fontsize=12)
+    ax1.set_title("Pie Potensi Prediksi", fontsize=14)
+    plt.setp(autotexts, size=11, weight="bold")
+    ax1.axis("equal")
+    fig1.tight_layout(pad=0.2)
     st.pyplot(fig1)
 
+# Bar Prediksi
 with col2:
-    fig2, ax2 = plt.subplots(figsize=(3.5, 2.2))
+    fig2, ax2 = plt.subplots(figsize=(3.2, 3.2))
     df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
     ax2.set_xlabel("Potensi")
     ax2.set_ylabel("Jumlah Siswa")
-    ax2.set_title("Bar Potensi Prediksi", fontsize=12)
+    ax2.set_title("Bar Potensi Prediksi", fontsize=14)
+    fig2.tight_layout(pad=0.2)
     st.pyplot(fig2)
 
+# Pie Asli (cek data dulu)
 with col3:
     if df_db['potensi_asli'].notnull().any():
         fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
-        df_db['potensi_asli'].value_counts().plot.pie(
-            autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 10}
+        wedges, texts, autotexts = ax3.pie(
+            df_db['potensi_asli'].value_counts(),
+            autopct='%1.0f%%',
+            textprops={'fontsize': 11},
+            startangle=90
         )
-        ax3.set_ylabel("")
-        ax3.set_title("Pie Potensi Asli", fontsize=12)
+        ax3.set_title("Pie Potensi Asli", fontsize=14)
+        plt.setp(autotexts, size=11, weight="bold")
+        ax3.axis("equal")
+        fig3.tight_layout(pad=0.2)
         st.pyplot(fig3)
     else:
         st.info("Tidak ada data Potensi Asli.")
