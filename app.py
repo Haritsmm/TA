@@ -330,7 +330,7 @@ if mode == "Data & Visualisasi":
         df_db_rename = df_db.rename(columns=nama_kolom_map)
         st.dataframe(df_db_rename)
 
-st.subheader("Distribusi Potensi Prediksi")-
+st.subheader("Distribusi Potensi Prediksi")
 col1, col2, col3 = st.columns(3)
 
 with col1:
