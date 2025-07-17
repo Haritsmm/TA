@@ -330,32 +330,42 @@ if mode == "Data & Visualisasi":
         df_db_rename = df_db.rename(columns=nama_kolom_map)
         st.dataframe(df_db_rename)
 
-        st.subheader("Distribusi Potensi Prediksi")
-        # Buat 3 kolom horizontal
-        col1, col2, col3 = st.columns(3)
-        
-        # Chart 1: Pie chart potensi prediksi
-        with col1:
-            fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
-            df_db['potensi_prediksi'].value_counts().plot.pie(
-                autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 10}
-            )
-            ax1.set_ylabel("")
-            ax1.set_title("Pie Potensi Prediksi", fontsize=12)
-            st.pyplot(fig1)
-        
-        # Chart 2: Bar chart potensi prediksi
-        with col2:
-            fig2, ax2 = plt.subplots(figsize=(3.5, 2.2))
-            df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
-            ax2.set_xlabel("Potensi")
-            ax2.set_ylabel("Jumlah Siswa")
-            ax2.set_title("Bar Potensi Prediksi", fontsize=12)
-            st.pyplot(fig2)
-        
-        # Chart 3: Pie chart potensi asli (jika ada)
-        with col3:
-    if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
+st.subheader("Distribusi Potensi Prediksi")
+
+# --- Tampilkan 3 chart secara sejajar (horizontal) ---
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
+    df_db['potensi_prediksi'].value_counts().plot.pie(
+        autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 10}
+    )
+    ax1.set_ylabel("")
+    ax1.set_title("Pie Potensi Prediksi", fontsize=12)
+    st.pyplot(fig1)
+
+with col2:
+    fig2, ax2 = plt.subplots(figsize=(3.5, 2.2))
+    df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
+    ax2.set_xlabel("Potensi")
+    ax2.set_ylabel("Jumlah Siswa")
+    ax2.set_title("Bar Potensi Prediksi", fontsize=12)
+    st.pyplot(fig2)
+
+with col3:
+    if df_db['potensi_asli'].notnull().any():
+        fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
+        df_db['potensi_asli'].value_counts().plot.pie(
+            autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 10}
+        )
+        ax3.set_ylabel("")
+        ax3.set_title("Pie Potensi Asli", fontsize=12)
+        st.pyplot(fig3)
+    else:
+        st.info("Tidak ada data Potensi Asli.")
+
+# --- EVALUASI MODEL (AMAN) ---
+if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
     df_eva = df_db[df_db['potensi_asli'].notnull()]
     y_true = df_eva['potensi_asli']
     y_pred = df_eva['potensi_prediksi']
@@ -370,10 +380,11 @@ if mode == "Data & Visualisasi":
         cr_df = cr_df.rename_axis("Kelas").rename(
             columns={"precision": "Presisi", "recall": "Recall"}
         )
-        st.write("**Classification Report (Presisi & Recall per Kelas):**")
+        st.write("Classification Report:")
         st.dataframe(cr_df, use_container_width=True)
     else:
         st.info("Data Potensi Asli hanya terdiri dari satu kelas, evaluasi model tidak dapat dihitung dengan benar.")
+
 
 # ========== MODE 4: DATABASE ==========
 if mode == "Database":
