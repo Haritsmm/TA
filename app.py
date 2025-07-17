@@ -78,14 +78,6 @@ mode = st.sidebar.radio(
     key="menu"
 )
 
-# ========== LOGOUT ==========
-if st.session_state.akses:
-    if st.button("Kunci Ulang (Logout)"):
-        st.session_state.akses = None
-        st.session_state.show_key_popup = False
-        st.session_state.password_key_input = ""
-        st.experimental_rerun()
-
 @st.cache_data
 def load_sample():
     df = pd.read_csv('data/data_siswa_smp.csv')
