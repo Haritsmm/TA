@@ -2,7 +2,13 @@ import sqlite3
 import pandas as pd
 import os
 
-DB_PATH = 'data_siswa.db'
+# Set path ke folder db
+DB_FOLDER = 'db'
+DB_PATH = os.path.join(DB_FOLDER, 'data_siswa.db')
+
+# Pastikan folder db ada
+if not os.path.exists(DB_FOLDER):
+    os.makedirs(DB_FOLDER)
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
