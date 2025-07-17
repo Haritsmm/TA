@@ -13,28 +13,25 @@ def generate_pdf_report(df, title):
     pdf.cell(0, 10, "Tanggal: " + pd.Timestamp.now().strftime('%d/%m/%Y %H:%M'), ln=True)
     pdf.ln(2)
 
-    # PILIH kolom utama yang ingin ditampilkan
     main_columns = [
         'Nama', 'Jenis Kelamin', 'Usia',
         'Nilai Matematika', 'Nilai IPA', 'Nilai IPS',
         'Nilai Bahasa Indonesia', 'Nilai Bahasa Inggris', 'Nilai TIK',
         'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
-        'Potensi Asli', 'Prediksi Potensi'
+        'Potensi Asli', 'Potensi Prediksi'
     ]
-    # Sesuaikan nama kolom df dengan main_columns, drop jika tak ada
     df2 = df.copy()
     df2 = df2[[col for col in main_columns if col in df2.columns]]
 
-    # Hitung lebar kolom otomatis
+    # Kolom proporsional
     col_widths = []
     for col in df2.columns:
         lebar = max(pdf.get_string_width(str(col)) + 6, 25)
-        # Cek isi tiap cell
         for isi in df2[col]:
             lebar = max(lebar, pdf.get_string_width(str(isi)) + 6)
         col_widths.append(lebar)
     total_width = sum(col_widths)
-    if total_width > 285:  # A4 landscape max width
+    if total_width > 285:
         scale = 285.0 / total_width
         col_widths = [w*scale for w in col_widths]
 
@@ -49,7 +46,6 @@ def generate_pdf_report(df, title):
     pdf.set_font("Arial", "", 9)
     for idx, row in df2.iterrows():
         for i, col in enumerate(df2.columns):
-            # Truncate jika terlalu panjang
             val = str(row[col])
             if len(val) > 20:
                 val = val[:17] + "..."
