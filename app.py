@@ -8,79 +8,61 @@ from utils.model_utils import train_and_predict, single_predict, FTR, preprocess
 from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
 from utils.pdf_utils import generate_pdf_report
 
-# ========== KUNCI ==========
+# ========== SETTING KUNCI ==========
 KUNCI_UTAMA = "superadmin2025"
 KUNCI_CADANGAN = "admin2025"
 
 if "akses" not in st.session_state:
     st.session_state.akses = None
-if "show_key_popup" not in st.session_state:
-    st.session_state.show_key_popup = False
 
-def cek_kunci_input(password):
-    if password == KUNCI_UTAMA:
-        st.session_state.akses = "semua"
-        st.session_state.show_key_popup = False
-        st.success("Kunci utama benar! Seluruh menu terbuka.")
-    elif password == KUNCI_CADANGAN:
-        st.session_state.akses = "cadangan"
-        st.session_state.show_key_popup = False
-        st.success("Kunci cadangan benar! Menu Batch Simulasi & Data & Visualisasi terbuka.")
-    else:
-        st.error("Kunci salah! Coba lagi.")
-
-# ========== SIDEBAR ==========
-
+# ========== SIDEBAR KUNCI (dengan desain custom) ==========
 with st.sidebar:
-    if st.button("🔑 Key", help="Klik untuk membuka kunci", use_container_width=True):
-        st.session_state.show_key_popup = True
-    st.header("Menu")
+    st.markdown(
+        """
+        <div style="border:2px solid #3a3a3a; border-radius:9px; padding:14px 10px 8px 10px; margin-bottom:15px; background-color:#191C24;">
+            <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
+                <span style="font-size:1.45em;">🔑</span>
+                <span style="font-size:1.15em; font-weight:bold; letter-spacing:1px;">Key</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    # Kolom input password
+    password_input = st.text_input(
+        "Masukkan Kunci Akses", 
+        type="password", 
+        placeholder="Password Kunci",
+        key="kunci_password"
+    )
+    key_clicked = st.button("Buka Kunci", use_container_width=True)
+    if key_clicked:
+        if password_input == KUNCI_UTAMA:
+            st.session_state.akses = "semua"
+            st.success("Kunci utama benar! Seluruh menu terbuka.")
+        elif password_input == KUNCI_CADANGAN:
+            st.session_state.akses = "cadangan"
+            st.success("Kunci cadangan benar! Menu Batch Simulasi & Data & Visualisasi terbuka.")
+        else:
+            st.session_state.akses = None
+            st.error("Kunci salah! Coba lagi.")
 
-# ========== MENU PILIHAN ==========
+    # Tombol logout jika sudah login
+    if st.session_state.akses:
+        if st.button("Kunci Ulang (Logout)", use_container_width=True):
+            st.session_state.akses = None
+            st.session_state.kunci_password = ""
+            st.experimental_rerun()
 
+# ========== MENU AKSES OTOMATIS ==========
 MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
 MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
 MENU_SINGLE = ["Siswa Individu"]
 
-# ========== MODAL POP-UP KEY ==========
-
-if st.session_state.show_key_popup:
-    st.markdown("""
-        <style>
-            .modal-overlay {
-                position:fixed; top:0; left:0; right:0; bottom:0;
-                background:rgba(30,32,38,0.8); z-index:9999;
-            }
-            .modal-content {
-                position:fixed; top:24%; left:0; right:0;
-                margin-left:auto; margin-right:auto;
-                background:#23272f; border-radius:16px;
-                padding:32px 28px 24px 28px;
-                max-width:380px;
-                box-shadow:0 8px 32px rgba(0,0,0,.45);
-                z-index:10000;
-            }
-        </style>
-        <div class="modal-overlay"></div>
-    """, unsafe_allow_html=True)
-    st.markdown('<div class="modal-content">', unsafe_allow_html=True)
-    st.markdown("### 🔑 Masukkan Kunci Akses")
-    password_input = st.text_input("Password Kunci", type="password", key="password_key_input")
-    col1, col2 = st.columns([1,1])
-    with col1:
-        if st.button("Konfirmasi"):
-            cek_kunci_input(password_input)
-    with col2:
-        if st.button("Batal"):
-            st.session_state.show_key_popup = False
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.stop()  # stop eksekusi Streamlit di sini, agar menu di bawah tidak jalan saat pop-up aktif
-
-# ========== MENU PILIHAN SETELAH KUNCI ==========
-
-if st.session_state.akses == "semua":
+akses = st.session_state.get("akses", None)
+if akses == "semua":
     menu_options = MENU_ALL
-elif st.session_state.akses == "cadangan":
+elif akses == "cadangan":
     menu_options = MENU_LIMITED
 else:
     menu_options = MENU_SINGLE
@@ -102,14 +84,6 @@ mode = st.sidebar.radio(
     menu_options,
     key="menu"
 )
-
-# ========== LOGOUT ==========
-if st.session_state.akses:
-    if st.button("Kunci Ulang (Logout)"):
-        st.session_state.akses = None
-        st.session_state.show_key_popup = False
-        st.session_state.password_key_input = ""
-        st.experimental_rerun()
 
 @st.cache_data
 def load_sample():
