@@ -252,8 +252,8 @@ if mode == "Batch Simulasi":
 # ========== MODE 3: DATA & VISUALISASI ==========
 if mode == "Data & Visualisasi":
     st.subheader("Data Siswa & Visualisasi")
-    st.caption(f"DB Path: {os.path.abspath(dbu.DB_PATH)}")
-    st.caption(f"DB Exists? {'Yes' if os.path.exists(dbu.DB_PATH) else 'No'}")
+  #  st.caption(f"DB Path: {os.path.abspath(dbu.DB_PATH)}")
+  #  st.caption(f"DB Exists? {'Yes' if os.path.exists(dbu.DB_PATH) else 'No'}")
     df_db = ambil_semua_data()
     if df_db.empty:
         st.warning("Database masih kosong. Silakan input data dulu.")
