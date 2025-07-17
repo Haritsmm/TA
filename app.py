@@ -312,8 +312,6 @@ if mode == "Batch Simulasi":
 # ========== MODE 3: DATA & VISUALISASI ==========
 if mode == "Data & Visualisasi":
     st.subheader("Data Siswa & Visualisasi")
-  #  st.caption(f"DB Path: {os.path.abspath(dbu.DB_PATH)}")
-  #  st.caption(f"DB Exists? {'Yes' if os.path.exists(dbu.DB_PATH) else 'No'}")
     df_db = ambil_semua_data()
     if df_db.empty:
         st.warning("Database masih kosong. Silakan input data dulu.")
@@ -339,24 +337,53 @@ if mode == "Data & Visualisasi":
         st.dataframe(df_db_rename)
 
         st.subheader("Distribusi Potensi Prediksi")
-        fig1, ax1 = plt.subplots(figsize=(5, 5))
-        df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
-        plt.title("Distribusi Potensi Prediksi")
-        ax1.axis("equal")
-        st.pyplot(fig1)
-        fig2, ax2 = plt.subplots(figsize=(6, 3))
-        df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
-        plt.xlabel("Potensi")
-        plt.ylabel("Jumlah Siswa")
-        plt.title("Distribusi Potensi Prediksi (Bar Chart)")
-        st.pyplot(fig2)
-        if df_db['potensi_asli'].notnull().any():
-            st.write("Distribusi Potensi Asli (jika tersedia):")
-            fig3, ax3 = plt.subplots(figsize=(5, 5))
-            df_db['potensi_asli'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax3)
-            plt.title("Distribusi Potensi")
-            ax3.axis("equal")
-            st.pyplot(fig3)
+        col1, col2, col3 = st.columns(3)
+        # Chart 1: Pie Potensi Prediksi
+        with col1:
+            fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
+            wedges, texts, autotexts = ax1.pie(
+                df_db['potensi_prediksi'].value_counts(),
+                labels=df_db['potensi_prediksi'].value_counts().index,
+                autopct='%1.0f%%',
+                textprops={'fontsize': 11},
+                startangle=90
+            )
+            ax1.set_title("Pie Potensi Prediksi", fontsize=14)
+            plt.setp(autotexts, size=11, weight="bold")
+            ax1.axis("equal")
+            fig1.tight_layout(pad=0.2)
+            st.pyplot(fig1)
+
+        # Chart 2: Bar Potensi Prediksi
+        with col2:
+            fig2, ax2 = plt.subplots(figsize=(3.2, 3.2))
+            df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
+            ax2.set_xlabel("Potensi")
+            ax2.set_ylabel("Jumlah Siswa")
+            ax2.set_title("Bar Potensi Prediksi", fontsize=14)
+            fig2.tight_layout(pad=0.2)
+            st.pyplot(fig2)
+
+        # Chart 3: Pie Potensi Asli
+        with col3:
+            if df_db['potensi_asli'].notnull().any():
+                fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
+                wedges, texts, autotexts = ax3.pie(
+                    df_db['potensi_asli'].value_counts(),
+                    labels=df_db['potensi_asli'].value_counts().index,
+                    autopct='%1.0f%%',
+                    textprops={'fontsize': 11},
+                    startangle=90
+                )
+                ax3.set_title("Pie Potensi Asli", fontsize=14)
+                plt.setp(autotexts, size=11, weight="bold")
+                ax3.axis("equal")
+                fig3.tight_layout(pad=0.2)
+                st.pyplot(fig3)
+            else:
+                st.info("Tidak ada data Potensi Asli.")
+
+        # Evaluasi Model
         if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
             df_eva = df_db[df_db['potensi_asli'].notnull()]
             y_true = df_eva['potensi_asli']
