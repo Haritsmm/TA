@@ -39,20 +39,13 @@ with st.sidebar:
     if key_clicked:
         if password_input == KUNCI_UTAMA:
             st.session_state.akses = "semua"
-            st.success("Kunci utama benar! Seluruh menu terbuka.")
+            st.success("Kunci benar! Selamat Datang Admin.")
         elif password_input == KUNCI_CADANGAN:
             st.session_state.akses = "cadangan"
-            st.success("Kunci cadangan benar! Menu Batch Simulasi & Data & Visualisasi terbuka.")
+            st.success("Kunci benar! Selamat Datang Guru.")
         else:
             st.session_state.akses = None
             st.error("Kunci salah! Coba lagi.")
-
-    # Tombol logout jika sudah login
-    if st.session_state.akses:
-        if st.button("Kunci Ulang (Logout)", use_container_width=True):
-            st.session_state.akses = None
-            st.session_state.kunci_password = ""
-            st.experimental_rerun()
 
 # ========== MENU AKSES OTOMATIS ==========
 MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
