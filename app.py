@@ -355,25 +355,25 @@ if mode == "Data & Visualisasi":
         
         # Chart 3: Pie chart potensi asli (jika ada)
         with col3:
-            if df_db['potensi_asli'].notnull().any():
-                fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
-                df_db['potensi_asli'].value_counts().plot.pie(
-                    autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 10}
-                )
-                ax3.set_ylabel("")
-                ax3.set_title("Pie Potensi Asli", fontsize=12)
-                st.pyplot(fig3)
-            else:
-                st.info("Tidak ada data Potensi Asli.")
-            st.subheader("Evaluasi Model")
-            if len(y_true.unique()) > 1:
-                from sklearn.metrics import accuracy_score, classification_report
-                acc_db = accuracy_score(y_true, y_pred)
-                st.metric("Akurasi (Database)", f"{acc_db:.2%}")
-                cr_db = classification_report(y_true, y_pred, output_dict=True)
-                cr_df = pd.DataFrame(cr_db).T.iloc[:-3, :2]
-                st.write("Classification Report:")
-                st.dataframe(cr_df)
+    if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
+    df_eva = df_db[df_db['potensi_asli'].notnull()]
+    y_true = df_eva['potensi_asli']
+    y_pred = df_eva['potensi_prediksi']
+
+    st.subheader("Evaluasi Model")
+    if len(y_true.unique()) > 1:
+        from sklearn.metrics import accuracy_score, classification_report
+        acc_db = accuracy_score(y_true, y_pred)
+        st.metric("Akurasi (Database)", f"{acc_db:.2%}")
+        cr_db = classification_report(y_true, y_pred, output_dict=True)
+        cr_df = pd.DataFrame(cr_db).T.iloc[:-3, :2]
+        cr_df = cr_df.rename_axis("Kelas").rename(
+            columns={"precision": "Presisi", "recall": "Recall"}
+        )
+        st.write("**Classification Report (Presisi & Recall per Kelas):**")
+        st.dataframe(cr_df, use_container_width=True)
+    else:
+        st.info("Data Potensi Asli hanya terdiri dari satu kelas, evaluasi model tidak dapat dihitung dengan benar.")
 
 # ========== MODE 4: DATABASE ==========
 if mode == "Database":
