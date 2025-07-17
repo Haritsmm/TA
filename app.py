@@ -8,6 +8,8 @@ from utils.model_utils import train_and_predict, single_predict, FTR, preprocess
 from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
 from utils.pdf_utils import generate_pdf_report
 
+df_db = ambil_semua_data()
+
 # ========== SETTING KUNCI ==========
 KUNCI_UTAMA = "admin2025"
 KUNCI_CADANGAN = "guru2025"
@@ -331,63 +333,65 @@ if mode == "Data & Visualisasi":
         st.dataframe(df_db_rename)
 
 st.subheader("Distribusi Potensi Prediksi")
-
-df_db = ambil_semua_data()
-
 if df_db.empty:
     st.warning("Database masih kosong. Silakan input data dulu.")
 else:
-col1, col2, col3 = st.columns(3)
+    st.subheader("Distribusi Potensi Prediksi")
+    col1, col2, col3 = st.columns(3)
 
-with col1:
-    fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
-    df_db['potensi_prediksi'].value_counts().plot.pie(
-        autopct='%1.0f%%', ax=ax1, textprops={'fontsize': 15}
-    )
-    ax1.set_ylabel("")
-    ax1.set_title("Potensi Prediksi", fontsize=13)
-    st.pyplot(fig1)
-
-with col2:
-    fig2, ax2 = plt.subplots(figsize=(3.5, 2.2))
-    df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
-    ax2.set_xlabel("Potensi")
-    ax2.set_ylabel("Jumlah Siswa")
-    ax2.set_title("Jumlah Potensi Prediksi", fontsize=15)
-    st.pyplot(fig2)
-
-with col3:
-    if df_db['potensi_asli'].notnull().any():
-        fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
-        df_db['potensi_asli'].value_counts().plot.pie(
-            autopct='%1.0f%%', ax=ax3, textprops={'fontsize': 10}
+    with col1:
+        fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
+        df_db['potensi_prediksi'].value_counts().plot.pie(
+            autopct='%1.0f%%',
+            ax=ax1,
+            textprops={'fontsize': 11}
         )
-        ax3.set_ylabel("")
-        ax3.set_title("Potensi Asli", fontsize=12)
-        st.pyplot(fig3)
-    else:
-        st.info("Tidak ada data Potensi Asli.")
+        ax1.set_ylabel("")
+        ax1.set_title("Pie Potensi Prediksi", fontsize=13)
+        st.pyplot(fig1)
 
-# --- EVALUASI MODEL (AMAN) ---
-if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
-    df_eva = df_db[df_db['potensi_asli'].notnull()]
-    y_true = df_eva['potensi_asli']
-    y_pred = df_eva['potensi_prediksi']
+    with col2:
+        fig2, ax2 = plt.subplots(figsize=(3.5, 2.3))
+        df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
+        ax2.set_xlabel("Potensi")
+        ax2.set_ylabel("Jumlah Siswa")
+        ax2.set_title("Bar Potensi Prediksi", fontsize=13)
+        st.pyplot(fig2)
 
-    st.subheader("Evaluasi Model")
-    if len(y_true.unique()) > 1:
-        from sklearn.metrics import accuracy_score, classification_report
-        acc_db = accuracy_score(y_true, y_pred)
-        st.metric("Akurasi (Database)", f"{acc_db:.2%}")
-        cr_db = classification_report(y_true, y_pred, output_dict=True)
-        cr_df = pd.DataFrame(cr_db).T.iloc[:-3, :2]
-        cr_df = cr_df.rename_axis("Kelas").rename(
-            columns={"precision": "Presisi", "recall": "Recall"}
-        )
-        st.write("Classification Report:")
-        st.dataframe(cr_df, use_container_width=True)
-    else:
-        st.info("Data Potensi Asli hanya terdiri dari satu kelas, evaluasi model tidak dapat dihitung dengan benar.")
+    with col3:
+        if df_db['potensi_asli'].notnull().any():
+            fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
+            df_db['potensi_asli'].value_counts().plot.pie(
+                autopct='%1.0f%%',
+                ax=ax3,
+                textprops={'fontsize': 11}
+            )
+            ax3.set_ylabel("")
+            ax3.set_title("Pie Potensi Asli", fontsize=13)
+            st.pyplot(fig3)
+        else:
+            st.info("Tidak ada data Potensi Asli.")
+
+    # --- EVALUASI MODEL (Hanya jika data Potensi Asli dan Prediksi ada) ---
+    if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
+        df_eva = df_db[df_db['potensi_asli'].notnull()]
+        y_true = df_eva['potensi_asli']
+        y_pred = df_eva['potensi_prediksi']
+
+        st.subheader("Evaluasi Model")
+        if len(y_true.unique()) > 1:
+            from sklearn.metrics import accuracy_score, classification_report
+            acc_db = accuracy_score(y_true, y_pred)
+            st.metric("Akurasi (Database)", f"{acc_db:.2%}")
+            cr_db = classification_report(y_true, y_pred, output_dict=True)
+            cr_df = pd.DataFrame(cr_db).T.iloc[:-3, :2]
+            cr_df = cr_df.rename_axis("Kelas").rename(
+                columns={"precision": "Presisi", "recall": "Recall"}
+            )
+            st.write("Classification Report:")
+            st.dataframe(cr_df, use_container_width=True)
+        else:
+            st.info("Data Potensi Asli hanya terdiri dari satu kelas, evaluasi model tidak dapat dihitung dengan benar.")
 
 # ========== MODE 4: DATABASE ==========
 if mode == "Database":
