@@ -221,6 +221,12 @@ if mode == "Siswa Individu":
             st.pyplot(fig)
     
     # Tombol download PDF di luar form!
+    if 'hasil_prediksi_siswa' in st.session_state:
+        hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
+        # Generate PDF laporan dengan format baru (judul bisa kamu sesuaikan)
+        pdf_file = generate_pdf_report(hasil_output, "Laporan Hasil Prediksi Siswa")
+        st.session_state['pdf_file_siswa'] = pdf_file
+    
     if 'pdf_file_siswa' in st.session_state:
         with open(st.session_state['pdf_file_siswa'], "rb") as f:
             st.download_button(
@@ -301,11 +307,25 @@ if mode == "Batch Simulasi":
         st.dataframe(df_view)
         # Download hasil CSV & PDF
         csv_out = df_view.to_csv(index=False).encode()
-        st.download_button("Download Hasil Prediksi (CSV)", data=csv_out, file_name="hasil_prediksi_potensi.csv", mime="text/csv")
+        st.download_button(
+            "Download Hasil Prediksi (CSV)",
+            data=csv_out,
+            file_name="hasil_prediksi_potensi.csv",
+            mime="text/csv"
+        )
+        
+        # Generate PDF sesuai format baru, lalu tampilkan tombol download
         pdf_batch = generate_pdf_report(df_view, "Laporan Batch Prediksi Siswa")
         with open(pdf_batch, "rb") as f:
-            st.download_button("Download Laporan PDF Batch", f, file_name="Laporan_Batch_Potensi.pdf", mime="application/pdf")
+            st.download_button(
+                "Download Laporan PDF Batch",
+                f,
+                file_name="Laporan_Batch_Potensi.pdf",
+                mime="application/pdf"
+            )
+        # Setelah download, hapus file pdf sementara
         os.remove(pdf_batch)
+
 
 # ========== MODE 3: DATA & VISUALISASI ==========
 if mode == "Data & Visualisasi":
