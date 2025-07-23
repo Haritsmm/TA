@@ -6,7 +6,7 @@ import os
 
 from utils.model_utils import train_and_predict, single_predict, FTR, preprocess_df
 from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
-from utils.pdf_utils import generate_pdf_report
+from utils.pdf_utils import generate_pdf_report  # pastikan sudah diperbarui sesuai struktur laporan baru
 
 # ========== SETTING KUNCI ==========
 KUNCI_UTAMA = "admin2025"
@@ -14,29 +14,6 @@ KUNCI_CADANGAN = "guru2025"
 
 if "akses" not in st.session_state:
     st.session_state.akses = None
-
-# Mapping untuk kolom PDF & CSV
-MAP_KOLOM_PDF = {
-    'Nama': 'Nama', 'Jenis Kelamin': 'JK', 'Usia': 'Usia',
-    'Nilai Matematika': 'Matematika', 'Nilai IPA': 'IPA', 'Nilai IPS': 'IPS',
-    'Nilai Bahasa Indonesia': 'Bahasa Indonesia', 'Nilai Bahasa Inggris': 'Bahasa Inggris', 'Nilai TIK': 'TIK',
-    'Minat Sains': 'Minat Sains', 'Minat Bahasa': 'Minat Bahasa', 'Minat Sosial': 'Minat Sosial', 'Minat Teknologi': 'Minat Teknologi',
-    'Potensi (Label Asli)': 'Potensi Asli', 'Potensi Asli': 'Potensi Asli', 'Prediksi Potensi': 'Potensi Prediksi', 'Potensi Prediksi': 'Potensi Prediksi'
-}
-KOLOM_PDF_FINAL = [
-    'Nama', 'JK', 'Usia',
-    'Matematika', 'IPA', 'IPS',
-    'Bahasa Indonesia', 'Bahasa Inggris', 'TIK',
-    'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
-    'Potensi Asli', 'Potensi Prediksi'
-]
-
-def mapping_pdf(df):
-    df_map = df.rename(columns=MAP_KOLOM_PDF)
-    for col in KOLOM_PDF_FINAL:
-        if col not in df_map.columns:
-            df_map[col] = ""
-    return df_map[KOLOM_PDF_FINAL]
 
 # ========== SIDEBAR KUNCI ==========
 with st.sidebar:
@@ -51,6 +28,7 @@ with st.sidebar:
         """,
         unsafe_allow_html=True
     )
+    # Kolom input password
     password_input = st.text_input(
         "Masukkan Kunci Akses", 
         type="password", 
@@ -69,7 +47,7 @@ with st.sidebar:
             st.session_state.akses = None
             st.error("Kunci salah! Coba lagi.")
 
-# ========== MENU AKSES OTOMATIS ==========
+# ========== MENU AKSES ==========
 MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
 MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
 MENU_SINGLE = ["Siswa Individu"]
@@ -100,6 +78,14 @@ mode = st.sidebar.radio(
     key="menu"
 )
 
+# ========== LOGOUT ==========
+if st.session_state.akses:
+    if st.button("Kunci Ulang (Logout)"):
+        st.session_state.akses = None
+        st.session_state.show_key_popup = False
+        st.session_state.password_key_input = ""
+        st.experimental_rerun()
+
 @st.cache_data
 def load_sample():
     df = pd.read_csv('data/data_siswa_smp.csv')
@@ -123,7 +109,7 @@ if mode == "Siswa Individu":
         minat_bahasa = st.slider("Minat Bahasa (1-5)", min_value=1, max_value=5, value=3)
         minat_sosial = st.slider("Minat Sosial (1-5)", min_value=1, max_value=5, value=3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", min_value=1, max_value=5, value=3)
-        potensi = st.selectbox("Potensi Anda", 
+        potensi = st.selectbox("Potensi (Label Asli untuk Data Latih)", 
             options=["", "Sains", "Bahasa", "Sosial", "Teknologi"], 
             index=0, format_func=lambda x: "Pilih Potensi" if x == "" else x)
 
@@ -205,8 +191,8 @@ if mode == "Siswa Individu":
                     })
                     st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}** (Potensi: {potensi})")
                     hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
-                    hasil_output_pdf = mapping_pdf(hasil_output)
-                    pdf_file = generate_pdf_report(hasil_output_pdf, f"Laporan Prediksi Siswa: {nama}")
+                    # PDF baru (tampilan SMPN 6 Bekasi)
+                    pdf_file = generate_pdf_report(hasil_output, "Laporan Hasil Prediksi Siswa")
                     st.session_state['pdf_file_siswa'] = pdf_file
 
     if 'hasil_prediksi_siswa' in st.session_state:
@@ -219,16 +205,16 @@ if mode == "Siswa Individu":
             "Prediksi Potensi": "potensi_prediksi"
         })], ignore_index=True)
         st.markdown("#### Distribusi Potensi Prediksi")
-        col_chart, col_dummy = st.columns([1, 2])
-        with col_chart:
-            fig, ax = plt.subplots(figsize=(3.5, 3.5))
-            df_all['potensi_prediksi'].value_counts().plot.pie(
-                autopct='%1.0f%%', ax=ax, textprops={'fontsize': 9}
-            )
+        # Gunakan ukuran chart kecil
+        col1 = st.columns([1])[0]
+        with col1:
+            fig, ax = plt.subplots(figsize=(4, 4))
+            df_all['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax, textprops={'fontsize': 10})
             ax.set_ylabel("")
-            ax.set_title("Distribusi Potensi Prediksi", fontsize=11)
+            ax.set_title("Distribusi Potensi Prediksi", fontsize=13)
             st.pyplot(fig)
 
+    # Tombol download PDF di luar form!
     if 'pdf_file_siswa' in st.session_state:
         with open(st.session_state['pdf_file_siswa'], "rb") as f:
             st.download_button(
@@ -256,11 +242,11 @@ if mode == "Batch Simulasi":
 
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
-        df.columns = [c.strip() for c in df.columns]
         st.write("Preview Data Siswa yang Diupload:")
         st.dataframe(df)
 
         if st.button("Simulasi Batch"):
+            df.columns = [c.strip() for c in df.columns]
             df.rename(columns={
                 "Nilai Matematika": "nilai_mtk", "Nilai IPA": "nilai_ipa", "Nilai IPS": "nilai_ips",
                 "Nilai Bahasa Indonesia": "nilai_bindo", "Nilai Bahasa Inggris": "nilai_bing", "Nilai TIK": "nilai_tik",
@@ -268,9 +254,6 @@ if mode == "Batch Simulasi":
                 "Minat Sosial": "minat_sosial", "Minat Teknologi": "minat_teknologi",
                 "Jenis Kelamin": "jenis_kelamin", "Usia": "usia", "Potensi": "potensi_asli", "Nama": "nama"
             }, inplace=True)
-            if 'nama' in df.columns:
-                df = df[df['nama'].astype(str).str.strip().str.lower() != "-"]
-                df = df[df['nama'].astype(str).str.strip() != ""]
             df = preprocess_df(df)
             df_all = ambil_semua_data()
             if df_all.empty:
@@ -300,23 +283,12 @@ if mode == "Batch Simulasi":
         }
         df_view = df.rename(columns=nama_kolom_map)
         st.dataframe(df_view)
+        # Download hasil CSV & PDF (pakai PDF baru)
         csv_out = df_view.to_csv(index=False).encode()
-        st.download_button(
-            "Download Hasil Prediksi (CSV)",
-            data=csv_out,
-            file_name="hasil_prediksi_potensi.csv",
-            mime="text/csv"
-        )
-        # Mapping PDF kolom
-        df_pdf = mapping_pdf(df_view)
-        pdf_batch = generate_pdf_report(df_pdf, "Laporan Batch Prediksi Siswa")
+        st.download_button("Download Hasil Prediksi (CSV)", data=csv_out, file_name="hasil_prediksi_potensi.csv", mime="text/csv")
+        pdf_batch = generate_pdf_report(df_view, "Laporan Batch Prediksi Siswa")
         with open(pdf_batch, "rb") as f:
-            st.download_button(
-                "Download Laporan PDF Batch",
-                f,
-                file_name="Laporan_Batch_Potensi.pdf",
-                mime="application/pdf"
-            )
+            st.download_button("Download Laporan PDF Batch", f, file_name="Laporan_Batch_Potensi.pdf", mime="application/pdf")
         os.remove(pdf_batch)
 
 # ========== MODE 3: DATA & VISUALISASI ==========
@@ -329,6 +301,7 @@ if mode == "Data & Visualisasi":
         if st.button("Kosongkan Database", type="primary"):
             kosongkan_database()
             st.warning("Database berhasil dikosongkan! Silakan refresh halaman.")
+
         st.write(f"Jumlah seluruh data siswa dalam database: {len(df_db)}")
         nama_kolom_map = {
             'id': 'ID', 'nama': 'Nama', 'jenis_kelamin': 'Jenis Kelamin',
@@ -342,49 +315,28 @@ if mode == "Data & Visualisasi":
         }
         df_db_rename = df_db.rename(columns=nama_kolom_map)
         st.dataframe(df_db_rename)
-
         st.subheader("Distribusi Potensi Prediksi")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
-            wedges, texts, autotexts = ax1.pie(
-                df_db['potensi_prediksi'].value_counts(),
-                labels=df_db['potensi_prediksi'].value_counts().index,
-                autopct='%1.0f%%',
-                textprops={'fontsize': 11},
-                startangle=90
-            )
-            ax1.set_title("Pie Potensi Prediksi", fontsize=14)
-            plt.setp(autotexts, size=11, weight="bold")
-            ax1.axis("equal")
-            fig1.tight_layout(pad=0.2)
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            fig1, ax1 = plt.subplots(figsize=(4, 4))
+            df_db['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax1)
+            ax1.set_ylabel("")
+            ax1.set_title("Pie Potensi Prediksi")
             st.pyplot(fig1)
-        with col2:
-            fig2, ax2 = plt.subplots(figsize=(3.2, 3.2))
+        with c2:
+            fig2, ax2 = plt.subplots(figsize=(4.2, 4))
             df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
             ax2.set_xlabel("Potensi")
             ax2.set_ylabel("Jumlah Siswa")
-            ax2.set_title("Bar Potensi Prediksi", fontsize=14)
-            fig2.tight_layout(pad=0.2)
+            ax2.set_title("Bar Potensi Prediksi")
             st.pyplot(fig2)
-        with col3:
+        with c3:
             if df_db['potensi_asli'].notnull().any():
-                fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
-                wedges, texts, autotexts = ax3.pie(
-                    df_db['potensi_asli'].value_counts(),
-                    labels=df_db['potensi_asli'].value_counts().index,
-                    autopct='%1.0f%%',
-                    textprops={'fontsize': 11},
-                    startangle=90
-                )
-                ax3.set_title("Pie Potensi Asli", fontsize=14)
-                plt.setp(autotexts, size=11, weight="bold")
-                ax3.axis("equal")
-                fig3.tight_layout(pad=0.2)
+                fig3, ax3 = plt.subplots(figsize=(4, 4))
+                df_db['potensi_asli'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax3)
+                ax3.set_ylabel("")
+                ax3.set_title("Pie Potensi Asli")
                 st.pyplot(fig3)
-            else:
-                st.info("Tidak ada data Potensi Asli.")
-
         if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
             df_eva = df_db[df_db['potensi_asli'].notnull()]
             y_true = df_eva['potensi_asli']
