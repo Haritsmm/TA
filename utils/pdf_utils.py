@@ -26,7 +26,7 @@ class PDFWithHeader(FPDF):
         self.line(12, self.get_y(), 287, self.get_y())
         self.ln(6)
 
-def generate_pdf_report(df, title, kepala_sekolah="Ahmad Yani S.Pd.M.Si", nip="197209301998031009"):
+def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196612311995012001"):
     pdf = PDFWithHeader(orientation="L", unit="mm", format="A4")
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=16)
@@ -41,9 +41,9 @@ def generate_pdf_report(df, title, kepala_sekolah="Ahmad Yani S.Pd.M.Si", nip="1
 
     # Kolom-kolom utama (urutkan dan tampilkan yang ada saja)
     main_columns = [
-        'Nama', 'Jenis Kelamin', 'Usia',
-        'Nilai Matematika', 'Nilai IPA', 'Nilai IPS',
-        'Nilai Bahasa Indonesia', 'Nilai Bahasa Inggris', 'Nilai TIK',
+        'Nama', 'JK', 'Usia',
+        'MTK', 'IPA', 'IPS',
+        'Bahasa Indonesia', 'Bahasa Inggris', 'TIK',
         'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
         'Potensi Asli', 'Potensi Prediksi'
     ]
