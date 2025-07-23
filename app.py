@@ -102,7 +102,7 @@ if mode == "Siswa Individu":
         minat_sosial = st.slider("Minat Sosial (1-5)", min_value=1, max_value=5, value=3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", min_value=1, max_value=5, value=3)
         # Tambahan input Potensi manual
-        potensi = st.selectbox("Potensi (Label Asli untuk Data Latih)", 
+        potensi = st.selectbox("Potensi Anda", 
             options=["", "Sains", "Bahasa", "Sosial", "Teknologi"], 
             index=0, format_func=lambda x: "Pilih Potensi" if x == "" else x)
 
