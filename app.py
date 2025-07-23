@@ -281,6 +281,15 @@ if mode == "Batch Simulasi":
                 "Minat Sosial": "minat_sosial", "Minat Teknologi": "minat_teknologi",
                 "Jenis Kelamin": "jenis_kelamin", "Usia": "usia", "Potensi": "potensi_asli", "Nama": "nama"
             }, inplace=True)
+            
+            # ========== FILTER DATA VALID ==========
+            # Hapus baris yang nama kosong, nama "-", atau semua nilai 0
+            if 'nama' in df.columns:
+                df = df[df['nama'].astype(str).str.strip().str.lower() != "-"]
+                df = df[df['nama'].astype(str).str.strip() != ""]
+            # Jika ingin cek nilai minimal, bisa aktifkan baris di bawah:
+            # df = df[df['nilai_mtk'] > 0]
+            
             df = preprocess_df(df)
             df_all = ambil_semua_data()
             if df_all.empty:
