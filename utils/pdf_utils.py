@@ -26,12 +26,12 @@ class PDFWithHeader(FPDF):
         self.line(12, self.get_y(), 287, self.get_y())
         self.ln(6)
 
-def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196612311995012001"):
+def generate_pdf_report(df, title, kepala_sekolah="Ahmad Yani S.Pd.M.Si", nip="197209301998031009"):
     pdf = PDFWithHeader(orientation="L", unit="mm", format="A4")
     pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_auto_page_break(auto=True, margin=16)
     pdf.set_line_width(0.3)
-
+    
     # Judul Laporan (tengah)
     pdf.set_font("Arial", "B", 13)
     pdf.cell(0, 12, title.upper(), align="C", ln=True)
@@ -39,65 +39,38 @@ def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196
     pdf.cell(0, 10, "Tanggal: " + pd.Timestamp.now().strftime('%d/%m/%Y %H:%M'), ln=True)
     pdf.ln(2)
 
-    # --- Split columns jadi dua tabel ---
-    kolom_atas = [
-        'Nama', 'JK', 'Usia',
-        'Matematika', 'IPA', 'IPS',
-        'Bahasa Indonesia', 'NBahasa Inggris', 'TIK'
-    ]
-    kolom_bawah = [
+    # Kolom-kolom utama (urutkan dan tampilkan yang ada saja)
+    main_columns = [
+        'Nama', 'Jenis Kelamin', 'Usia',
+        'Nilai Matematika', 'Nilai IPA', 'Nilai IPS',
+        'Nilai Bahasa Indonesia', 'Nilai Bahasa Inggris', 'Nilai TIK',
         'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
         'Potensi Asli', 'Potensi Prediksi'
     ]
-    df1 = df[[col for col in kolom_atas if col in df.columns]]
-    df2 = df[[col for col in kolom_bawah if col in df.columns]]
+    df2 = df.copy()
+    df2 = df2[[col for col in main_columns if col in df2.columns]]
 
-    # ===== TABEL 1: Nilai & Identitas =====
+    # Lebar kolom proporsional
+    col_widths = []
+    for col in df2.columns:
+        lebar = max(pdf.get_string_width(str(col)) + 6, 28)
+        for isi in df2[col]:
+            lebar = max(lebar, pdf.get_string_width(str(isi)) + 6)
+        col_widths.append(lebar)
+    total_width = sum(col_widths)
+    if total_width > 272:  # margin L 13, R 13
+        scale = 272.0 / total_width
+        col_widths = [w * scale for w in col_widths]
+
+    # Tabel Header
     pdf.set_font("Arial", "B", 10)
     pdf.set_fill_color(25, 118, 210)  # Biru
     pdf.set_text_color(255, 255, 255)
-    col_widths1 = []
-    for col in df1.columns:
-        lebar = max(pdf.get_string_width(str(col)) + 6, 28)
-        for isi in df1[col]:
-            lebar = max(lebar, pdf.get_string_width(str(isi)) + 6)
-        col_widths1.append(lebar)
-    total_width1 = sum(col_widths1)
-    if total_width1 > 272:
-        scale = 272.0 / total_width1
-        col_widths1 = [w * scale for w in col_widths1]
-
-    for i, col in enumerate(df1.columns):
-        pdf.cell(col_widths1[i], 8, str(col), border=1, align='C', fill=True)
-    pdf.ln()
-    pdf.set_font("Arial", "", 9)
-    pdf.set_text_color(0, 0, 0)
-    for idx, row in df1.iterrows():
-        for i, col in enumerate(df1.columns):
-            val = str(row[col])
-            if len(val) > 22:
-                val = val[:20] + "..."
-            pdf.cell(col_widths1[i], 8, val, border=1, align='C')
-        pdf.ln()
-
-    # ===== TABEL 2: Minat & Potensi =====
-    pdf.ln(3)
-    pdf.set_font("Arial", "B", 10)
-    pdf.set_fill_color(25, 118, 210)
-    pdf.set_text_color(255, 255, 255)
-    col_widths2 = []
-    for col in df2.columns:
-        lebar = max(pdf.get_string_width(str(col)) + 6, 32)
-        for isi in df2[col]:
-            lebar = max(lebar, pdf.get_string_width(str(isi)) + 6)
-        col_widths2.append(lebar)
-    total_width2 = sum(col_widths2)
-    if total_width2 > 272:
-        scale = 272.0 / total_width2
-        col_widths2 = [w * scale for w in col_widths2]
     for i, col in enumerate(df2.columns):
-        pdf.cell(col_widths2[i], 8, str(col), border=1, align='C', fill=True)
+        pdf.cell(col_widths[i], 8, str(col), border=1, align='C', fill=True)
     pdf.ln()
+
+    # Isi Tabel
     pdf.set_font("Arial", "", 9)
     pdf.set_text_color(0, 0, 0)
     for idx, row in df2.iterrows():
@@ -105,10 +78,10 @@ def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196
             val = str(row[col])
             if len(val) > 22:
                 val = val[:20] + "..."
-            pdf.cell(col_widths2[i], 8, val, border=1, align='C')
+            pdf.cell(col_widths[i], 8, val, border=1, align='C')
         pdf.ln()
 
-    # ===== Footer tanda tangan =====
+    # Footer tanda tangan
     pdf.ln(10)
     pdf.set_xy(220, pdf.get_y())
     pdf.set_font("Arial", size=11)
