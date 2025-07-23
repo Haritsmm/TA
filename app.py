@@ -208,10 +208,12 @@ if mode == "Siswa Individu":
     
         # Tampilkan Pie Chart distribusi prediksi potensi
         st.markdown("#### Distribusi Potensi Prediksi")
-        fig, ax = plt.subplots(figsize=(4, 4))  # Lebih kecil dari default
-        df_all['potensi_prediksi'].value_counts().plot.pie(autopct='%1.0f%%', ax=ax, textprops={'fontsize': 10})
-        ax.set_ylabel("")  # Hapus label Y
-        ax.set_title("Distribusi Potensi Prediksi", fontsize=13)
+        fig, ax = plt.subplots(figsize=(3.5, 3.5))
+        df_all['potensi_prediksi'].value_counts().plot.pie(
+            autopct='%1.0f%%', ax=ax, textprops={'fontsize': 9}
+        )
+        ax.set_ylabel("")
+        ax.set_title("Distribusi Potensi Prediksi", fontsize=11)
         st.pyplot(fig)
     
     # Tombol download PDF di luar form!
