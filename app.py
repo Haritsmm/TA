@@ -222,7 +222,18 @@ if mode == "Siswa Individu":
     
     # Tombol download PDF di luar form!
     if 'hasil_prediksi_siswa' in st.session_state:
-        hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
+        # Susun urutan kolom yang konsisten untuk laporan PDF
+        main_columns = [
+            'Nama', 'Jenis Kelamin', 'Usia',
+            'Nilai Matematika', 'Nilai IPA', 'Nilai IPS',
+            'Nilai Bahasa Indonesia', 'Nilai Bahasa Inggris', 'Nilai TIK',
+            'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
+            'Potensi (Label Asli)', 'Prediksi Potensi'
+        ]
+        # Ambil data, isi kolom yang belum ada dengan kosong
+        data = {col: st.session_state['hasil_prediksi_siswa'].get(col, "") for col in main_columns}
+        hasil_output = pd.DataFrame([data])
+    
         # Generate PDF laporan dengan format baru (judul bisa kamu sesuaikan)
         pdf_file = generate_pdf_report(hasil_output, "Laporan Hasil Prediksi Siswa")
         st.session_state['pdf_file_siswa'] = pdf_file
@@ -315,6 +326,20 @@ if mode == "Batch Simulasi":
         )
         
         # Generate PDF sesuai format baru, lalu tampilkan tombol download
+        main_columns = [
+            'Nama', 'Jenis Kelamin', 'Usia',
+            'Nilai Matematika', 'Nilai IPA', 'Nilai IPS',
+            'Nilai Bahasa Indonesia', 'Nilai Bahasa Inggris', 'Nilai TIK',
+            'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
+            'Potensi Asli', 'Potensi Prediksi'
+        ]
+        # Pastikan semua kolom ada, isi yang tidak ada dengan kosong
+        for col in main_columns:
+            if col not in df_view.columns:
+                df_view[col] = ""
+        df_view = df_view[main_columns]
+        
+        # Generate PDF sesuai format baru, lalu tampilkan tombol download
         pdf_batch = generate_pdf_report(df_view, "Laporan Batch Prediksi Siswa")
         with open(pdf_batch, "rb") as f:
             st.download_button(
@@ -323,7 +348,6 @@ if mode == "Batch Simulasi":
                 file_name="Laporan_Batch_Potensi.pdf",
                 mime="application/pdf"
             )
-        # Setelah download, hapus file pdf sementara
         os.remove(pdf_batch)
 
 
