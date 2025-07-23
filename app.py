@@ -15,7 +15,30 @@ KUNCI_CADANGAN = "guru2025"
 if "akses" not in st.session_state:
     st.session_state.akses = None
 
-# ========== SIDEBAR KUNCI (dengan desain custom) ==========
+# Mapping untuk kolom PDF & CSV
+MAP_KOLOM_PDF = {
+    'Nama': 'Nama', 'Jenis Kelamin': 'JK', 'Usia': 'Usia',
+    'Nilai Matematika': 'Matematika', 'Nilai IPA': 'IPA', 'Nilai IPS': 'IPS',
+    'Nilai Bahasa Indonesia': 'Bahasa Indonesia', 'Nilai Bahasa Inggris': 'Bahasa Inggris', 'Nilai TIK': 'TIK',
+    'Minat Sains': 'Minat Sains', 'Minat Bahasa': 'Minat Bahasa', 'Minat Sosial': 'Minat Sosial', 'Minat Teknologi': 'Minat Teknologi',
+    'Potensi (Label Asli)': 'Potensi Asli', 'Potensi Asli': 'Potensi Asli', 'Prediksi Potensi': 'Potensi Prediksi', 'Potensi Prediksi': 'Potensi Prediksi'
+}
+KOLOM_PDF_FINAL = [
+    'Nama', 'JK', 'Usia',
+    'Matematika', 'IPA', 'IPS',
+    'Bahasa Indonesia', 'Bahasa Inggris', 'TIK',
+    'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
+    'Potensi Asli', 'Potensi Prediksi'
+]
+
+def mapping_pdf(df):
+    df_map = df.rename(columns=MAP_KOLOM_PDF)
+    for col in KOLOM_PDF_FINAL:
+        if col not in df_map.columns:
+            df_map[col] = ""
+    return df_map[KOLOM_PDF_FINAL]
+
+# ========== SIDEBAR KUNCI ==========
 with st.sidebar:
     st.markdown(
         """
@@ -28,7 +51,6 @@ with st.sidebar:
         """,
         unsafe_allow_html=True
     )
-    # Kolom input password
     password_input = st.text_input(
         "Masukkan Kunci Akses", 
         type="password", 
@@ -101,21 +123,17 @@ if mode == "Siswa Individu":
         minat_bahasa = st.slider("Minat Bahasa (1-5)", min_value=1, max_value=5, value=3)
         minat_sosial = st.slider("Minat Sosial (1-5)", min_value=1, max_value=5, value=3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", min_value=1, max_value=5, value=3)
-        # Tambahan input Potensi manual
         potensi = st.selectbox("Potensi Anda", 
             options=["", "Sains", "Bahasa", "Sosial", "Teknologi"], 
             index=0, format_func=lambda x: "Pilih Potensi" if x == "" else x)
 
         submitted = st.form_submit_button("Simulasi & Simpan")
         if submitted:
-            # Validasi input (Potensi wajib diisi)
             if (not nama or not jenis_kelamin or usia is None or 
                 nilai_mtk is None or nilai_ipa is None or nilai_ips is None or 
                 nilai_bindo is None or nilai_bing is None or nilai_tik is None or potensi == ""):
                 st.error("Semua kolom termasuk Potensi wajib diisi dengan benar!")
             else:
-                # ...proses training & prediksi seperti sebelumnya...
-                # Pastikan data latih (df_train) hanya ambil data yang berlabel
                 df_all = ambil_semua_data()
                 df_train = df_all[
                     df_all['potensi_asli'].notnull() & 
@@ -167,7 +185,6 @@ if mode == "Siswa Individu":
                         "Potensi (Label Asli)": potensi,
                         "Prediksi Potensi": hasil_pred
                     }
-                    # Simpan ke database, label asli ikut disimpan!
                     simpan_data_siswa({
                         'nama': nama,
                         'jenis_kelamin': jenis_kelamin,
@@ -188,29 +205,21 @@ if mode == "Siswa Individu":
                     })
                     st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}** (Potensi: {potensi})")
                     hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
-                    pdf_file = generate_pdf_report(hasil_output, f"Laporan Prediksi Siswa: {nama}")
+                    hasil_output_pdf = mapping_pdf(hasil_output)
+                    pdf_file = generate_pdf_report(hasil_output_pdf, f"Laporan Prediksi Siswa: {nama}")
                     st.session_state['pdf_file_siswa'] = pdf_file
 
     if 'hasil_prediksi_siswa' in st.session_state:
         hasil_df = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
-    
-        # Tampilkan preview hasil prediksi individu
         st.markdown("#### Preview Hasil Simulasi")
         st.dataframe(hasil_df)
-    
-        # Pie Chart perbandingan prediksi seluruh database
         from utils.db_utils import ambil_semua_data
         df_db = ambil_semua_data()
-        # Gabungkan prediksi baru ke database untuk visualisasi
         df_all = pd.concat([df_db, hasil_df.rename(columns={
             "Prediksi Potensi": "potensi_prediksi"
         })], ignore_index=True)
-    
-        # Tampilkan Pie Chart distribusi prediksi potensi
         st.markdown("#### Distribusi Potensi Prediksi")
-        
-        col_chart, col_dummy = st.columns([1, 2])  # Kolom kiri kecil untuk chart
-        
+        col_chart, col_dummy = st.columns([1, 2])
         with col_chart:
             fig, ax = plt.subplots(figsize=(3.5, 3.5))
             df_all['potensi_prediksi'].value_counts().plot.pie(
@@ -219,25 +228,7 @@ if mode == "Siswa Individu":
             ax.set_ylabel("")
             ax.set_title("Distribusi Potensi Prediksi", fontsize=11)
             st.pyplot(fig)
-    
-    # Tombol download PDF di luar form!
-    if 'hasil_prediksi_siswa' in st.session_state:
-        # Susun urutan kolom yang konsisten untuk laporan PDF
-        main_columns = [
-            'Nama', 'Jenis Kelamin', 'Usia',
-            'Nilai Matematika', 'Nilai IPA', 'Nilai IPS',
-            'Nilai Bahasa Indonesia', 'Nilai Bahasa Inggris', 'Nilai TIK',
-            'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
-            'Potensi (Label Asli)', 'Prediksi Potensi'
-        ]
-        # Ambil data, isi kolom yang belum ada dengan kosong
-        data = {col: st.session_state['hasil_prediksi_siswa'].get(col, "") for col in main_columns}
-        hasil_output = pd.DataFrame([data])
-    
-        # Generate PDF laporan dengan format baru (judul bisa kamu sesuaikan)
-        pdf_file = generate_pdf_report(hasil_output, "Laporan Hasil Prediksi Siswa")
-        st.session_state['pdf_file_siswa'] = pdf_file
-    
+
     if 'pdf_file_siswa' in st.session_state:
         with open(st.session_state['pdf_file_siswa'], "rb") as f:
             st.download_button(
@@ -246,7 +237,6 @@ if mode == "Siswa Individu":
                 file_name="Laporan_Siswa.pdf",
                 mime="application/pdf"
             )
-        # Hapus file dan session_state setelah download (supaya tidak numpuk)
         os.remove(st.session_state['pdf_file_siswa'])
         del st.session_state['pdf_file_siswa']
         del st.session_state['hasil_prediksi_siswa']
@@ -264,16 +254,13 @@ if mode == "Batch Simulasi":
 
     uploaded_file = st.file_uploader("Upload file .csv", type=["csv"])
 
-    # Step 1: Preview data, Step 2: Simulasi Batch
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
+        df.columns = [c.strip() for c in df.columns]
         st.write("Preview Data Siswa yang Diupload:")
         st.dataframe(df)
 
-        # Step 2: Tombol Simulasi
         if st.button("Simulasi Batch"):
-            # Normalisasi & rename kolom
-            df.columns = [c.strip() for c in df.columns]
             df.rename(columns={
                 "Nilai Matematika": "nilai_mtk", "Nilai IPA": "nilai_ipa", "Nilai IPS": "nilai_ips",
                 "Nilai Bahasa Indonesia": "nilai_bindo", "Nilai Bahasa Inggris": "nilai_bing", "Nilai TIK": "nilai_tik",
@@ -281,15 +268,9 @@ if mode == "Batch Simulasi":
                 "Minat Sosial": "minat_sosial", "Minat Teknologi": "minat_teknologi",
                 "Jenis Kelamin": "jenis_kelamin", "Usia": "usia", "Potensi": "potensi_asli", "Nama": "nama"
             }, inplace=True)
-            
-            # ========== FILTER DATA VALID ==========
-            # Hapus baris yang nama kosong, nama "-", atau semua nilai 0
             if 'nama' in df.columns:
                 df = df[df['nama'].astype(str).str.strip().str.lower() != "-"]
                 df = df[df['nama'].astype(str).str.strip() != ""]
-            # Jika ingin cek nilai minimal, bisa aktifkan baris di bawah:
-            # df = df[df['nilai_mtk'] > 0]
-            
             df = preprocess_df(df)
             df_all = ambil_semua_data()
             if df_all.empty:
@@ -297,25 +278,19 @@ if mode == "Batch Simulasi":
             else:
                 df_all = pd.concat([df_all, df], ignore_index=True)
             hasil_df, acc, label_encoder, mlp, scaler = train_and_predict(df_all.copy())
-            # Prediksi hanya untuk batch yang diupload (bukan seluruh data DB)
             X_upload = df[FTR]
             X_upload_scaled = scaler.transform(X_upload)
             y_upload_pred = mlp.predict(X_upload_scaled)
             prediksi_label = label_encoder.inverse_transform(y_upload_pred)
             df['potensi_prediksi'] = prediksi_label
             simpan_data_batch(df, "batch")
-
-            # Simpan hasil ke session_state supaya download tidak rerun simulasi
             st.session_state['batch_df_result'] = df
             st.session_state['batch_acc'] = acc
 
-    # Step 3: Tampilkan hasil & tombol download, tanpa rerun simulasi
     if 'batch_df_result' in st.session_state:
         df = st.session_state['batch_df_result']
         acc = st.session_state['batch_acc']
         st.success(f"Akurasi Model (uji): {acc:.2%}")
-
-        # Mapping nama kolom
         nama_kolom_map = {
             'nama': 'Nama', 'jenis_kelamin': 'Jenis Kelamin', 'usia': 'Usia',
             'nilai_mtk': 'Nilai Matematika', 'nilai_ipa': 'Nilai IPA', 'nilai_ips': 'Nilai IPS',
@@ -325,7 +300,6 @@ if mode == "Batch Simulasi":
         }
         df_view = df.rename(columns=nama_kolom_map)
         st.dataframe(df_view)
-        # Download hasil CSV & PDF
         csv_out = df_view.to_csv(index=False).encode()
         st.download_button(
             "Download Hasil Prediksi (CSV)",
@@ -333,23 +307,9 @@ if mode == "Batch Simulasi":
             file_name="hasil_prediksi_potensi.csv",
             mime="text/csv"
         )
-        
-        # Generate PDF sesuai format baru, lalu tampilkan tombol download
-        main_columns = [
-            'Nama', 'Jenis Kelamin', 'Usia',
-            'Nilai Matematika', 'Nilai IPA', 'Nilai IPS',
-            'Nilai Bahasa Indonesia', 'Nilai Bahasa Inggris', 'Nilai TIK',
-            'Minat Sains', 'Minat Bahasa', 'Minat Sosial', 'Minat Teknologi',
-            'Potensi Asli', 'Potensi Prediksi'
-        ]
-        # Pastikan semua kolom ada, isi yang tidak ada dengan kosong
-        for col in main_columns:
-            if col not in df_view.columns:
-                df_view[col] = ""
-        df_view = df_view[main_columns]
-        
-        # Generate PDF sesuai format baru, lalu tampilkan tombol download
-        pdf_batch = generate_pdf_report(df_view, "Laporan Batch Prediksi Siswa")
+        # Mapping PDF kolom
+        df_pdf = mapping_pdf(df_view)
+        pdf_batch = generate_pdf_report(df_pdf, "Laporan Batch Prediksi Siswa")
         with open(pdf_batch, "rb") as f:
             st.download_button(
                 "Download Laporan PDF Batch",
@@ -359,7 +319,6 @@ if mode == "Batch Simulasi":
             )
         os.remove(pdf_batch)
 
-
 # ========== MODE 3: DATA & VISUALISASI ==========
 if mode == "Data & Visualisasi":
     st.subheader("Data Siswa & Visualisasi")
@@ -367,13 +326,10 @@ if mode == "Data & Visualisasi":
     if df_db.empty:
         st.warning("Database masih kosong. Silakan input data dulu.")
     else:
-        # Tombol Kosongkan Database
         if st.button("Kosongkan Database", type="primary"):
             kosongkan_database()
             st.warning("Database berhasil dikosongkan! Silakan refresh halaman.")
-
         st.write(f"Jumlah seluruh data siswa dalam database: {len(df_db)}")
-        # Mapping nama kolom
         nama_kolom_map = {
             'id': 'ID', 'nama': 'Nama', 'jenis_kelamin': 'Jenis Kelamin',
             'usia': 'Usia', 'nilai_mtk': 'Nilai Matematika', 'nilai_ipa': 'Nilai IPA',
@@ -389,7 +345,6 @@ if mode == "Data & Visualisasi":
 
         st.subheader("Distribusi Potensi Prediksi")
         col1, col2, col3 = st.columns(3)
-        # Chart 1: Pie Potensi Prediksi
         with col1:
             fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
             wedges, texts, autotexts = ax1.pie(
@@ -404,8 +359,6 @@ if mode == "Data & Visualisasi":
             ax1.axis("equal")
             fig1.tight_layout(pad=0.2)
             st.pyplot(fig1)
-
-        # Chart 2: Bar Potensi Prediksi
         with col2:
             fig2, ax2 = plt.subplots(figsize=(3.2, 3.2))
             df_db['potensi_prediksi'].value_counts().plot.bar(ax=ax2)
@@ -414,8 +367,6 @@ if mode == "Data & Visualisasi":
             ax2.set_title("Bar Potensi Prediksi", fontsize=14)
             fig2.tight_layout(pad=0.2)
             st.pyplot(fig2)
-
-        # Chart 3: Pie Potensi Asli
         with col3:
             if df_db['potensi_asli'].notnull().any():
                 fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
@@ -434,7 +385,6 @@ if mode == "Data & Visualisasi":
             else:
                 st.info("Tidak ada data Potensi Asli.")
 
-        # Evaluasi Model
         if df_db['potensi_asli'].notnull().any() and df_db['potensi_prediksi'].notnull().any():
             df_eva = df_db[df_db['potensi_asli'].notnull()]
             y_true = df_eva['potensi_asli']
