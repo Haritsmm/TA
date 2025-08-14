@@ -27,29 +27,40 @@ def map_columns(df, colmap=COLUMN_MAP):
 
 class PDFWithHeader(FPDF):
     def header(self):
-        # Logo opsional
+        # Gunakan margin konsisten untuk semua konten header
+        margin = 12                # kiri/kanan
+        page_w = self.w
+        effective_w = page_w - 2 * margin
+
+        # Logo kiri & kanan diposisikan SIMETRIS
         try:
             if os.path.exists('logo/logo-bekasi.png'):
-                self.image('logo/logo-bekasi.png', 13, 8, 22)
+                self.image('logo/logo-bekasi.png', x=margin, y=8, w=22)
             if os.path.exists('logo/logo-smp.png'):
-                self.image('logo/logo-smp.png', 265, 8, 22)
+                self.image('logo/logo-smp.png', x=page_w - margin - 22, y=8, w=22)
         except Exception:
             pass
 
-        self.set_xy(0, 10)
-        self.set_font('Arial', 'B', 13)
-        self.cell(0, 7, "PEMERINTAH KOTA BEKASI", align="C", ln=1)
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 7, "DINAS PENDIDIKAN", align="C", ln=1)
-        self.set_font('Arial', 'B', 16)
-        self.cell(0, 8, "SMP NEGERI 6 BEKASI", align="C", ln=1)
-        self.set_font('Arial', '', 10)
-        self.cell(0, 5, "Terakreditasi A / NPSN: 20222976", align="C", ln=1)
-        self.cell(0, 5, "Jl. Mesjid Nurul Ihsan, Jatiwaringin, Kec. Pondokgede, Kota Bekasi.", align="C", ln=1)
-        self.cell(0, 5, "Website: https://smpn6bekasi.sch.id / email: smpn6kotabekasi@gmail.com", align="C", ln=1)
+        # Helper: cetak 1 baris tepat di tengah lebar efektif
+        def center_line(txt, style='', size=12, h=7):
+            self.set_font('Arial', style, size)
+            self.set_x(margin)
+            self.cell(effective_w, h, txt, border=0, align='C', ln=1)
+
+        # Teks header (semua menggunakan lebar efektif yang sama)
+        self.set_y(10)
+        center_line("PEMERINTAH KOTA BEKASI", style='B', size=13, h=7)
+        center_line("DINAS PENDIDIKAN",        style='B', size=12, h=7)
+        center_line("SMP NEGERI 6 BEKASI",     style='B', size=16, h=8)
+        center_line("Terakreditasi A / NPSN: 20222976", size=10, h=5)
+        center_line("Jl. Mesjid Nurul Ihsan, Jatiwaringin, Kec. Pondokgede, Kota Bekasi.", size=10, h=5)
+        center_line("Website: https://smpn6bekasi.sch.id / email: smpn6kotabekasi@gmail.com", size=10, h=5)
+
+        # Garis pemisah dengan margin yang sama
         self.ln(2)
         self.set_line_width(1)
-        self.line(12, self.get_y(), 287, self.get_y())
+        y = self.get_y()
+        self.line(margin, y, page_w - margin, y)
         self.ln(6)
 
 def _slugify(text):
@@ -161,3 +172,4 @@ def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196
     output_file = f"{slug}_{timestamp}.pdf"
     pdf.output(output_file)
     return output_file
+
