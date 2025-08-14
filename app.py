@@ -9,13 +9,13 @@ st.set_page_config(
     layout="wide"
 )
 
-# ====== LOCAL IMPORTS (file di folder yang sama) ======
-from model_utils import train_and_predict, single_predict, FTR, preprocess_df
-from db_utils import (
+# ====== IMPORT SESUAI STRUKTUR REPO (paket utils) ======
+from utils.model_utils import train_and_predict, single_predict, FTR, preprocess_df
+from utils.db_utils import (
     init_db, simpan_data_siswa, simpan_data_batch,
     ambil_semua_data, backup_db, kosongkan_database
 )
-from pdf_utils import generate_pdf_report, map_columns
+from utils.pdf_utils import generate_pdf_report, map_columns
 
 # ========== SETTING KUNCI ==========
 KUNCI_UTAMA = "admin2025"
