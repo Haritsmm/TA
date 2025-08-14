@@ -2,7 +2,7 @@ import os
 import sqlite3
 import pandas as pd
 
-# Path database
+# Path database relatif dari root project
 DB_FOLDER = 'db'
 DB_PATH = os.path.join(DB_FOLDER, 'data_siswa.db')
 
