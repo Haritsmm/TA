@@ -1,12 +1,21 @@
-import streamlit as st
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
-import utils.db_utils as dbu
-import os
+import streamlit as st
 
-from utils.model_utils import train_and_predict, single_predict, FTR, preprocess_df
-from utils.db_utils import init_db, simpan_data_siswa, simpan_data_batch, ambil_semua_data, backup_db, kosongkan_database
-from utils.pdf_utils import generate_pdf_report, map_columns
+# ====== PAGE CONFIG MUST BE FIRST ======
+st.set_page_config(
+    page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)",
+    layout="wide"
+)
+
+# ====== LOCAL IMPORTS (file di folder yang sama) ======
+from model_utils import train_and_predict, single_predict, FTR, preprocess_df
+from db_utils import (
+    init_db, simpan_data_siswa, simpan_data_batch,
+    ambil_semua_data, backup_db, kosongkan_database
+)
+from pdf_utils import generate_pdf_report, map_columns
 
 # ========== SETTING KUNCI ==========
 KUNCI_UTAMA = "admin2025"
@@ -15,7 +24,15 @@ KUNCI_CADANGAN = "guru2025"
 if "akses" not in st.session_state:
     st.session_state.akses = None
 
-# ========== SIDEBAR KUNCI (dengan desain custom) ==========
+# ========== MENU AKSES ==========
+MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
+MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
+MENU_SINGLE = ["Siswa Individu"]
+
+# Inisialisasi DB paling awal
+init_db()
+
+# ========== SIDEBAR KUNCI ==========
 with st.sidebar:
     st.markdown(
         """
@@ -29,8 +46,8 @@ with st.sidebar:
         unsafe_allow_html=True
     )
     password_input = st.text_input(
-        "Masukkan Kunci Akses", 
-        type="password", 
+        "Masukkan Kunci Akses",
+        type="password",
         placeholder="Masukkan Kunci",
         key="kunci_password"
     )
@@ -46,11 +63,6 @@ with st.sidebar:
             st.session_state.akses = None
             st.error("Kunci salah! Coba lagi.")
 
-# ========== MENU AKSES OTOMATIS ==========
-MENU_ALL = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi", "Database"]
-MENU_LIMITED = ["Siswa Individu", "Batch Simulasi", "Data & Visualisasi"]
-MENU_SINGLE = ["Siswa Individu"]
-
 akses = st.session_state.get("akses", None)
 if akses == "semua":
     menu_options = MENU_ALL
@@ -59,11 +71,7 @@ elif akses == "cadangan":
 else:
     menu_options = MENU_SINGLE
 
-# ========== PAGE SETUP & JUDUL ==========
-
-st.set_page_config(page_title="Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)", layout="wide")
-init_db()
-
+# ========== JUDUL ==========
 st.title("Prediksi Potensi Akademik Siswa (Jaringan Syaraf Tiruan)")
 st.write(
     """
@@ -71,17 +79,17 @@ st.write(
     """
 )
 
-mode = st.sidebar.radio(
-    "Pilih Menu:",
-    menu_options,
-    key="menu"
-)
+mode = st.sidebar.radio("Pilih Menu:", menu_options, key="menu")
 
 @st.cache_data
 def load_sample():
-    df = pd.read_csv('data/data_siswa_smp.csv')
-    df.columns = [c.strip() for c in df.columns]
-    return df
+    try:
+        df = pd.read_csv('data/data_siswa_smp.csv')
+        df.columns = [c.strip() for c in df.columns]
+        return df
+    except Exception:
+        st.info("Contoh data tidak ditemukan (data/data_siswa_smp.csv). Silakan lanjutkan tanpa contoh.")
+        return pd.DataFrame()
 
 # ========== MODE 1: SISWA INDIVIDU ==========
 if mode == "Siswa Individu":
@@ -100,32 +108,39 @@ if mode == "Siswa Individu":
         minat_bahasa = st.slider("Minat Bahasa (1-5)", min_value=1, max_value=5, value=3)
         minat_sosial = st.slider("Minat Sosial (1-5)", min_value=1, max_value=5, value=3)
         minat_teknologi = st.slider("Minat Teknologi (1-5)", min_value=1, max_value=5, value=3)
-        potensi = st.selectbox("Potensi Anda", 
-            options=["", "Sains", "Bahasa", "Sosial", "Teknologi"], 
-            index=0, format_func=lambda x: "Pilih Potensi" if x == "" else x)
+        potensi = st.selectbox(
+            "Potensi Anda",
+            options=["", "Sains", "Bahasa", "Sosial", "Teknologi"],
+            index=0, format_func=lambda x: "Pilih Potensi" if x == "" else x
+        )
 
         submitted = st.form_submit_button("Simulasi & Simpan")
         if submitted:
-            if (not nama or not jenis_kelamin or usia is None or 
-                nilai_mtk is None or nilai_ipa is None or nilai_ips is None or 
+            if (not nama or not jenis_kelamin or usia is None or
+                nilai_mtk is None or nilai_ipa is None or nilai_ips is None or
                 nilai_bindo is None or nilai_bing is None or nilai_tik is None or potensi == ""):
                 st.error("Semua kolom termasuk Potensi wajib diisi dengan benar!")
             else:
+                # siapkan data latih
                 df_all = ambil_semua_data()
                 df_train = df_all[
-                    df_all['potensi_asli'].notnull() & 
-                    (df_all['potensi_asli'] != "") & 
+                    df_all['potensi_asli'].notnull() &
+                    (df_all['potensi_asli'] != "") &
                     (df_all['potensi_asli'] != "-")
                 ] if not df_all.empty and 'potensi_asli' in df_all.columns else pd.DataFrame()
                 if df_train.empty:
-                    df_train = pd.read_csv('data/data_siswa_smp.csv')
-                    if "Potensi" in df_train.columns:
-                        df_train = df_train[
-                            df_train['Potensi'].notnull() &
-                            (df_train['Potensi'] != "") &
-                            (df_train['Potensi'] != "-")
-                        ]
-                        df_train.rename(columns={"Potensi": "potensi_asli"}, inplace=True)
+                    try:
+                        df_train = pd.read_csv('data/data_siswa_smp.csv')
+                        if "Potensi" in df_train.columns:
+                            df_train = df_train[
+                                df_train['Potensi'].notnull() &
+                                (df_train['Potensi'] != "") &
+                                (df_train['Potensi'] != "-")
+                            ]
+                            df_train.rename(columns={"Potensi": "potensi_asli"}, inplace=True)
+                    except Exception:
+                        df_train = pd.DataFrame()
+
                 if df_train.empty:
                     st.error("Data latih tidak tersedia. Harap upload data batch dengan label potensi terlebih dahulu.")
                 else:
@@ -145,6 +160,7 @@ if mode == "Siswa Individu":
                         'minat_teknologi': minat_teknologi
                     }
                     hasil_pred = single_predict(input_dict, mlp, scaler, label_encoder)
+
                     st.session_state['hasil_prediksi_siswa'] = {
                         "nama": nama,
                         "jenis_kelamin": jenis_kelamin,
@@ -160,13 +176,16 @@ if mode == "Siswa Individu":
                         "minat_sosial": minat_sosial,
                         "minat_teknologi": minat_teknologi,
                         "potensi_asli": potensi,
-                        "potensi_prediksi": hasil_pred
+                        "potensi_prediksi": hasil_pred,
+                        "sumber": "individu",
                     }
+
                     simpan_data_siswa(st.session_state['hasil_prediksi_siswa'])
                     st.success(f"Prediksi Potensi Akademik Siswa: **{hasil_pred}** (Potensi: {potensi})")
+
                     hasil_output = pd.DataFrame([st.session_state['hasil_prediksi_siswa']])
                     hasil_output_out = map_columns(hasil_output)
-                    pdf_file = generate_pdf_report(hasil_output_out, f"Laporan Prediksi Siswa: {nama}")
+                    pdf_file = generate_pdf_report(hasil_output_out, f"Laporan Prediksi Siswa - {nama}")
                     st.session_state['pdf_file_siswa'] = pdf_file
 
     if 'hasil_prediksi_siswa' in st.session_state:
@@ -174,31 +193,35 @@ if mode == "Siswa Individu":
         hasil_df_out = map_columns(hasil_df)
         st.markdown("#### Preview Hasil Simulasi")
         st.dataframe(hasil_df_out)
-        
+
         df_db = ambil_semua_data()
         df_all = pd.concat([df_db, hasil_df], ignore_index=True)
         df_all_out = map_columns(df_all)
 
         st.markdown("#### Distribusi Potensi Prediksi")
-        col_chart, col_dummy = st.columns([1, 2])
+        col_chart, _ = st.columns([1, 2])
         with col_chart:
             fig, ax = plt.subplots(figsize=(3.5, 3.5))
-            df_all_out['Potensi Prediksi'].value_counts().plot.pie(
-                autopct='%1.0f%%', ax=ax, textprops={'fontsize': 9}
-            )
-            ax.set_ylabel("")
-            ax.set_title("Distribusi Potensi Prediksi", fontsize=11)
-            st.pyplot(fig)
+            if 'Potensi Prediksi' in df_all_out.columns and not df_all_out.empty:
+                df_all_out['Potensi Prediksi'].value_counts().plot.pie(
+                    autopct='%1.0f%%', ax=ax, textprops={'fontsize': 9}
+                )
+                ax.set_ylabel("")
+                ax.set_title("Distribusi Potensi Prediksi", fontsize=11)
+                st.pyplot(fig)
 
     if 'pdf_file_siswa' in st.session_state:
         with open(st.session_state['pdf_file_siswa'], "rb") as f:
             st.download_button(
                 "Download Laporan PDF",
                 f,
-                file_name="Laporan_Siswa.pdf",
+                file_name=os.path.basename(st.session_state['pdf_file_siswa']),
                 mime="application/pdf"
             )
-        os.remove(st.session_state['pdf_file_siswa'])
+        try:
+            os.remove(st.session_state['pdf_file_siswa'])
+        except Exception:
+            pass
         del st.session_state['pdf_file_siswa']
         del st.session_state['hasil_prediksi_siswa']
 
@@ -211,7 +234,9 @@ if mode == "Batch Simulasi":
         "Minat Bahasa, Minat Sosial, Minat Teknologi, Potensi"
     )
     contoh = st.expander("Contoh Format CSV", expanded=False)
-    contoh.write(load_sample().head())
+    sample_df = load_sample()
+    if not sample_df.empty:
+        contoh.write(sample_df.head())
 
     uploaded_file = st.file_uploader("Upload file .csv", type=["csv"])
 
@@ -229,23 +254,28 @@ if mode == "Batch Simulasi":
                 "Minat Sosial": "minat_sosial", "Minat Teknologi": "minat_teknologi",
                 "Jenis Kelamin": "jenis_kelamin", "Usia": "usia", "Potensi": "potensi_asli", "Nama": "nama"
             }, inplace=True)
-            
+
             if 'nama' in df.columns:
                 df = df[df['nama'].astype(str).str.strip().str.lower() != "-"]
                 df = df[df['nama'].astype(str).str.strip() != ""]
             df = preprocess_df(df)
+
             df_all = ambil_semua_data()
             if df_all.empty:
                 df_all = df.copy()
             else:
                 df_all = pd.concat([df_all, df], ignore_index=True)
+
             hasil_df, acc, label_encoder, mlp, scaler = train_and_predict(df_all.copy())
             X_upload = df[FTR]
             X_upload_scaled = scaler.transform(X_upload)
             y_upload_pred = mlp.predict(X_upload_scaled)
             prediksi_label = label_encoder.inverse_transform(y_upload_pred)
             df['potensi_prediksi'] = prediksi_label
+
+            # simpan ke DB (fungsi sudah robust menerima snake_case atau Title Case)
             simpan_data_batch(df, "batch")
+
             st.session_state['batch_df_result'] = df
             st.session_state['batch_acc'] = acc
 
@@ -270,10 +300,13 @@ if mode == "Batch Simulasi":
             st.download_button(
                 "Download Laporan PDF Batch",
                 f,
-                file_name="Laporan_Batch_Potensi.pdf",
+                file_name=os.path.basename(pdf_batch),
                 mime="application/pdf"
             )
-        os.remove(pdf_batch)
+        try:
+            os.remove(pdf_batch)
+        except Exception:
+            pass
         del st.session_state['batch_df_result']
         del st.session_state['batch_acc']
 
@@ -296,29 +329,31 @@ if mode == "Data & Visualisasi":
         col1, col2, col3 = st.columns(3)
         with col1:
             fig1, ax1 = plt.subplots(figsize=(3.2, 3.2))
-            df_db_rename['Potensi Prediksi'].value_counts().plot.pie(
-                labels=df_db_rename['Potensi Prediksi'].value_counts().index,
-                autopct='%1.0f%%',
-                textprops={'fontsize': 11},
-                startangle=90,
-                ax=ax1
-            )
-            ax1.set_title("Pie Potensi Prediksi", fontsize=14)
-            ax1.axis("equal")
-            fig1.tight_layout(pad=0.2)
-            st.pyplot(fig1)
+            if 'Potensi Prediksi' in df_db_rename.columns:
+                df_db_rename['Potensi Prediksi'].value_counts().plot.pie(
+                    labels=df_db_rename['Potensi Prediksi'].value_counts().index,
+                    autopct='%1.0f%%',
+                    textprops={'fontsize': 11},
+                    startangle=90,
+                    ax=ax1
+                )
+                ax1.set_title("Pie Potensi Prediksi", fontsize=14)
+                ax1.axis("equal")
+                fig1.tight_layout(pad=0.2)
+                st.pyplot(fig1)
 
         with col2:
             fig2, ax2 = plt.subplots(figsize=(3.2, 3.2))
-            df_db_rename['Potensi Prediksi'].value_counts().plot.bar(ax=ax2)
-            ax2.set_xlabel("Potensi")
-            ax2.set_ylabel("Jumlah Siswa")
-            ax2.set_title("Bar Potensi Prediksi", fontsize=14)
-            fig2.tight_layout(pad=0.2)
-            st.pyplot(fig2)
+            if 'Potensi Prediksi' in df_db_rename.columns:
+                df_db_rename['Potensi Prediksi'].value_counts().plot.bar(ax=ax2)
+                ax2.set_xlabel("Potensi")
+                ax2.set_ylabel("Jumlah Siswa")
+                ax2.set_title("Bar Potensi Prediksi", fontsize=14)
+                fig2.tight_layout(pad=0.2)
+                st.pyplot(fig2)
 
         with col3:
-            if df_db_rename['Potensi Asli'].notnull().any():
+            if 'Potensi Asli' in df_db_rename.columns and df_db_rename['Potensi Asli'].notnull().any():
                 fig3, ax3 = plt.subplots(figsize=(3.2, 3.2))
                 df_db_rename['Potensi Asli'].value_counts().plot.pie(
                     labels=df_db_rename['Potensi Asli'].value_counts().index,
@@ -334,7 +369,10 @@ if mode == "Data & Visualisasi":
             else:
                 st.info("Tidak ada data Potensi Asli.")
 
-        if df_db_rename['Potensi Asli'].notnull().any() and df_db_rename['Potensi Prediksi'].notnull().any():
+        if ('Potensi Asli' in df_db_rename.columns and
+            'Potensi Prediksi' in df_db_rename.columns and
+            df_db_rename['Potensi Asli'].notnull().any() and
+            df_db_rename['Potensi Prediksi'].notnull().any()):
             df_eva = df_db_rename[df_db_rename['Potensi Asli'].notnull()]
             y_true = df_eva['Potensi Asli']
             y_pred = df_eva['Potensi Prediksi']
@@ -343,16 +381,21 @@ if mode == "Data & Visualisasi":
                 from sklearn.metrics import accuracy_score, classification_report
                 acc_db = accuracy_score(y_true, y_pred)
                 st.metric("Akurasi (Database)", f"{acc_db:.2%}")
-                cr_db = classification_report(y_true, y_pred, output_dict=True)
-                cr_df = pd.DataFrame(cr_db).T.iloc[:-3, :2]
+                cr_db = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
+                cr_df = pd.DataFrame(cr_db).T
+                for drop_key in ['accuracy', 'macro avg', 'weighted avg']:
+                    if drop_key in cr_df.index:
+                        cr_df = cr_df.drop(index=drop_key)
                 st.write("Classification Report:")
-                st.dataframe(cr_df)
+                st.dataframe(cr_df[['precision', 'recall', 'f1-score']])
+            else:
+                st.info("Belum cukup variasi kelas untuk evaluasi akurasi.")
 
 # ========== MODE 4: DATABASE ==========
 if mode == "Database":
     st.subheader("Backup Database (.db)")
-    dbfile = backup_db()
-    st.download_button("Download data_siswa.db", dbfile, file_name="data_siswa.db")
+    dbfile_bytes = backup_db()
+    st.download_button("Download data_siswa.db", dbfile_bytes, file_name="data_siswa.db")
     st.stop()
 
 # ========== FOOTER ==========
