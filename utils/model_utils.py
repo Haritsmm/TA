@@ -82,21 +82,22 @@ def train_and_predict(df):
     return df, acc, label_encoder, mlp, scaler
 
 def single_predict(input_dict, mlp, scaler, label_encoder):
-    X = np.array([[
-        input_dict['Jenis_Kelamin_enc'],
-        input_dict['usia'],
-        input_dict['nilai_mtk'],
-        input_dict['nilai_ipa'],
-        input_dict['nilai_ips'],
-        input_dict['nilai_bindo'],
-        input_dict['nilai_bing'],
-        input_dict['nilai_tik'],
-        input_dict['minat_sains'],
-        input_dict['minat_bahasa'],
-        input_dict['minat_sosial'],
-        input_dict['minat_teknologi'],
-    ]])
-    X_scaled = scaler.transform(X)
+    # Gunakan DataFrame agar nama fitur konsisten (hindari warning)
+    X_df = pd.DataFrame([{
+        "Jenis_Kelamin_enc": input_dict["Jenis_Kelamin_enc"],
+        "usia": input_dict["usia"],
+        "nilai_mtk": input_dict["nilai_mtk"],
+        "nilai_ipa": input_dict["nilai_ipa"],
+        "nilai_ips": input_dict["nilai_ips"],
+        "nilai_bindo": input_dict["nilai_bindo"],
+        "nilai_bing": input_dict["nilai_bing"],
+        "nilai_tik": input_dict["nilai_tik"],
+        "minat_sains": input_dict["minat_sains"],
+        "minat_bahasa": input_dict["minat_bahasa"],
+        "minat_sosial": input_dict["minat_sosial"],
+        "minat_teknologi": input_dict["minat_teknologi"],
+    }])[FTR]
+    X_scaled = scaler.transform(X_df)
     pred = mlp.predict(X_scaled)
     label = label_encoder.inverse_transform(pred)[0]
     return label
