@@ -1,6 +1,8 @@
 from fpdf import FPDF
 import pandas as pd
 import os
+import re
+from datetime import datetime
 
 COLUMN_MAP = {
     'nama': 'Nama',
@@ -25,7 +27,7 @@ def map_columns(df, colmap=COLUMN_MAP):
 
 class PDFWithHeader(FPDF):
     def header(self):
-        # Cek logo ada atau tidak
+        # Logo opsional
         try:
             if os.path.exists('logo/logo-bekasi.png'):
                 self.image('logo/logo-bekasi.png', 13, 8, 22)
@@ -50,6 +52,11 @@ class PDFWithHeader(FPDF):
         self.line(12, self.get_y(), 287, self.get_y())
         self.ln(6)
 
+def _slugify(text):
+    text = re.sub(r'[^A-Za-z0-9\- _]', '', str(text))
+    text = text.strip().replace(' ', '_')
+    return re.sub(r'_{2,}', '_', text)
+
 def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196612311995012001"):
     # Pastikan kolom sudah dimapping
     df = map_columns(df)
@@ -59,7 +66,7 @@ def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196
     pdf.set_line_width(0.3)
 
     pdf.set_font("Arial", "B", 13)
-    pdf.cell(0, 12, title.upper(), align="C", ln=True)
+    pdf.cell(0, 12, str(title).upper(), align="C", ln=True)
     pdf.set_font("Arial", size=11)
     pdf.cell(0, 10, "Tanggal: " + pd.Timestamp.now().strftime('%d/%m/%Y %H:%M'), ln=True)
     pdf.ln(2)
@@ -86,16 +93,17 @@ def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196
         for isi in df1[col]:
             lebar = max(lebar, pdf.get_string_width(str(isi)) + 6)
         col_widths1.append(lebar)
-    total_width1 = sum(col_widths1)
-    if total_width1 > 272:
+    total_width1 = sum(col_widths1) if col_widths1 else 0
+    if total_width1 > 272 and total_width1 > 0:
         scale = 272.0 / total_width1
         col_widths1 = [w * scale for w in col_widths1]
     for i, col in enumerate(df1.columns):
         pdf.cell(col_widths1[i], 8, str(col), border=1, align='C', fill=True)
-    pdf.ln()
+    if len(df1.columns) > 0:
+        pdf.ln()
     pdf.set_font("Arial", "", 9)
     pdf.set_text_color(0, 0, 0)
-    for idx, row in df1.iterrows():
+    for _, row in df1.iterrows():
         for i, col in enumerate(df1.columns):
             val = str(row[col])
             if len(val) > 22:
@@ -114,16 +122,17 @@ def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196
         for isi in df2[col]:
             lebar = max(lebar, pdf.get_string_width(str(isi)) + 6)
         col_widths2.append(lebar)
-    total_width2 = sum(col_widths2)
-    if total_width2 > 272:
+    total_width2 = sum(col_widths2) if col_widths2 else 0
+    if total_width2 > 272 and total_width2 > 0:
         scale = 272.0 / total_width2
         col_widths2 = [w * scale for w in col_widths2]
     for i, col in enumerate(df2.columns):
         pdf.cell(col_widths2[i], 8, str(col), border=1, align='C', fill=True)
-    pdf.ln()
+    if len(df2.columns) > 0:
+        pdf.ln()
     pdf.set_font("Arial", "", 9)
     pdf.set_text_color(0, 0, 0)
-    for idx, row in df2.iterrows():
+    for _, row in df2.iterrows():
         for i, col in enumerate(df2.columns):
             val = str(row[col])
             if len(val) > 22:
@@ -146,6 +155,9 @@ def generate_pdf_report(df, title, kepala_sekolah="Dra.Watimah,M.M.Pd", nip="196
     pdf.set_font("Arial", size=11)
     pdf.cell(70, 6, f"NIP: {nip}", ln=True, align="L")
 
-    output_file = "laporan_batch.pdf"
+    # Nama file unik
+    slug = _slugify(title) or "laporan"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_file = f"{slug}_{timestamp}.pdf"
     pdf.output(output_file)
     return output_file
